@@ -1,0 +1,97 @@
+---
+title: "Expected gain per cycle and per year"
+description: "The general gain equation used to compare selection methods."
+---
+
+## The idea
+
+Fehr writes the expected genetic gain from one cycle of selection in a general form that covers most methods:
+
+$$
+\Delta G = \frac{c\,k\,\sigma^2_A}{\sigma_P}, \qquad \Delta G_{\text{year}} = \frac{c\,k\,\sigma^2_A}{y\,\sigma_P} .
+$$
+
+- **k** is the standardized selection differential, the same as Falconer & Mackay's *i*. It depends only on the proportion selected (see [selection intensity](../quantgen/selection-intensity.qmd)).
+- **σ²~A~** is the additive genetic variance among the units selected. For families it is the part of σ²~A~ that the family means carry (for example ¼σ²~A~ among half-sib families).
+- **σ~P~** is the phenotypic standard deviation among the units selected, which shrinks as testing improves (see [entry-mean heritability](heritability-entry-mean.qmd)).
+- **c** is **parental control**: ½ when only the female parent is selected and pollen comes from the whole population, 1 when both parents of the next generation are selected.
+- **y** is the number of years per cycle.
+
+Because σ²~A~/σ~P~ = *h*² σ~P~, this is the breeder's equation *R* = *i h*² σ~P~ with two practical additions: who controls pollination, and how long a cycle takes. Gain per year, not gain per cycle, is what decides between methods.
+
+*Source: Fehr, selection theory; Falconer & Mackay, chapter 11.*
+
+## Widget
+
+Set up two selection schemes and compare them. Both start from the same population.
+
+```{ojs}
+import {pal, intensity} from "../js/common.js"
+
+viewof vA = Inputs.range([1, 50], {value: 10, step: 1, label: "σ²A among selection units"})
+viewof vP = Inputs.range([1, 100], {value: 30, step: 1, label: "σ²P among selection units"})
+```
+
+::: {.columns}
+::: {.column width="48%"}
+**Scheme A**
+
+```{ojs}
+viewof pA = Inputs.range([0.01, 0.8], {value: 0.1, step: 0.01, label: "Proportion selected"})
+viewof cA = Inputs.radio(new Map([["½ (one parent)", 0.5], ["1 (both parents)", 1]]), {value: 1, label: "Parental control"})
+viewof yA = Inputs.range([1, 6], {value: 2, step: 1, label: "Years per cycle"})
+```
+:::
+::: {.column width="4%"}
+:::
+::: {.column width="48%"}
+**Scheme B**
+
+```{ojs}
+viewof pB = Inputs.range([0.01, 0.8], {value: 0.2, step: 0.01, label: "Proportion selected"})
+viewof cB = Inputs.radio(new Map([["½ (one parent)", 0.5], ["1 (both parents)", 1]]), {value: 0.5, label: "Parental control"})
+viewof yB = Inputs.range([1, 6], {value: 1, step: 1, label: "Years per cycle"})
+```
+:::
+:::
+
+```{ojs}
+scheme = (name, p, c, y) => {
+  const k = intensity(p), perCycle = c * k * vA / Math.sqrt(vP);
+  return {name, k, perCycle, perYear: perCycle / y, y};
+}
+A = scheme("Scheme A", pA, cA, yA)
+B = scheme("Scheme B", pB, cB, yB)
+
+md`| | *k* | Gain per cycle | Years per cycle | **Gain per year** |
+|---|---|---|---|---|
+| Scheme A | ${A.k.toFixed(2)} | ${A.perCycle.toFixed(2)} | ${A.y} | **${A.perYear.toFixed(2)}** |
+| Scheme B | ${B.k.toFixed(2)} | ${B.perCycle.toFixed(2)} | ${B.y} | **${B.perYear.toFixed(2)}** |`
+```
+
+```{ojs}
+cumulative = [A, B].flatMap(s => d3.range(0, 13).map(year => ({
+  scheme: s.name, year, gain: Math.floor(year / s.y) * s.perCycle
+})))
+
+Plot.plot({
+  height: 300,
+  marginLeft: 50,
+  x: {label: "Years", ticks: 12},
+  y: {label: "Cumulative gain", grid: true},
+  color: {legend: true, domain: ["Scheme A", "Scheme B"], range: [pal[0], pal[1]]},
+  marks: [
+    Plot.line(cumulative, {x: "year", y: "gain", stroke: "scheme", strokeWidth: 2, curve: "step-after"}),
+    Plot.text(cumulative.filter(d => d.year === 12), {x: "year", y: "gain", text: "scheme", fill: "currentColor", dx: 6, textAnchor: "start"}),
+    Plot.tip(cumulative, Plot.pointer({x: "year", y: "gain", stroke: "scheme", title: d => `${d.scheme}, year ${d.year}\ncumulative gain ${d.gain.toFixed(2)}`}))
+  ],
+  marginRight: 70
+})
+```
+
+Gain arrives in steps, when each cycle is completed.
+
+## Things to try
+
+- Scheme B starts out like mass selection after pollination: one year per cycle but parental control ½. Set Scheme A to 3 years per cycle and B pulls ahead, despite gaining less than half as much per cycle.
+- Hold everything equal except years per cycle. Halving cycle length doubles gain per year, which is often the cheapest lever a breeder has.

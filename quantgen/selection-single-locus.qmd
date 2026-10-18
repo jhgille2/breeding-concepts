@@ -1,0 +1,98 @@
+---
+title: "Selection at a single locus"
+description: "How allele frequency changes when genotypes differ in fitness."
+---
+
+## The idea
+
+When the three genotypes at a locus leave different numbers of offspring, allele frequencies change. Write the relative fitnesses of *A*~1~*A*~1~, *A*~1~*A*~2~ and *A*~2~*A*~2~ as *w*~11~, *w*~12~ and *w*~22~. After selection, the frequency of *A*~1~ in the next generation is
+
+$$
+p' = \frac{p^2 w_{11} + pq\,w_{12}}{\bar w}, \qquad \bar w = p^2 w_{11} + 2pq\,w_{12} + q^2 w_{22}.
+$$
+
+A common parameterization selects against *A*~2~ with **selection coefficient** *s* and **dominance** *h*: *w*~11~ = 1, *w*~12~ = 1 − *hs*, *w*~22~ = 1 − *s*. The dominance of the fitness effect controls the speed of change:
+
+- **Against a recessive (*h* = 0):** *A*~2~ is removed quickly while it is common, but removal crawls once it is rare, because rare recessives hide in heterozygotes.
+- **Additive (*h* = ½):** steady, roughly logistic change.
+- **Against a dominant (*h* = 1):** a rare favoured allele (*A*~1~) rises slowly at first, because it only shows its advantage in homozygotes. Once it is common, the last copies of the harmful dominant are removed quickly, because every carrier is exposed.
+- **Overdominance (*w*~12~ highest):** a stable equilibrium at *p̂* = *t*~2~ / (*t*~1~ + *t*~2~), where *t*~1~ = 1 − *w*~11~/*w*~12~ and *t*~2~ = 1 − *w*~22~/*w*~12~.
+
+*Source: Falconer & Mackay, chapter 2.*
+
+## Widget
+
+```{ojs}
+import {pal} from "../js/common.js"
+
+viewof preset = Inputs.radio(["Against recessive", "Additive", "Against dominant", "Overdominance", "Custom"], {value: "Against recessive", label: "Fitness model"})
+viewof s = Inputs.range([0.01, 1], {value: 0.2, step: 0.01, label: "Selection coefficient (s)"})
+viewof hCustom = Inputs.range([-0.5, 1.5], {value: 0.5, step: 0.05, label: "Dominance h (Custom only)"})
+viewof p0 = Inputs.range([0.001, 0.999], {value: 0.05, step: 0.001, label: "Starting frequency of A₁ (p₀)"})
+viewof gens = Inputs.range([10, 500], {value: 150, step: 10, label: "Generations"})
+```
+
+```{ojs}
+w = {
+  const h = {"Against recessive": 0, "Additive": 0.5, "Against dominant": 1, "Custom": hCustom}[preset];
+  if (preset === "Overdominance") return {w11: 1 - s, w12: 1, w22: 1 - s / 2};
+  return {w11: 1, w12: 1 - h * s, w22: 1 - s};
+}
+
+step = p => {
+  const q = 1 - p, wbar = p * p * w.w11 + 2 * p * q * w.w12 + q * q * w.w22;
+  return (p * p * w.w11 + p * q * w.w12) / wbar;
+}
+
+traj = {
+  const out = [{t: 0, p: p0}];
+  let p = p0;
+  for (let t = 1; t <= gens; t++) { p = step(p); out.push({t, p}); }
+  return out;
+}
+
+deltaCurve = d3.range(0.001, 1, 0.005).map(p => ({p, dp: step(p) - p}))
+```
+
+```{ojs}
+md`Fitnesses: *w*₁₁ = **${w.w11.toFixed(2)}**, *w*₁₂ = **${w.w12.toFixed(2)}**, *w*₂₂ = **${w.w22.toFixed(2)}**. After ${gens} generations, *p* = **${traj[traj.length - 1].p.toFixed(3)}**.`
+```
+
+```{ojs}
+Plot.plot({
+  height: 300,
+  marginLeft: 50,
+  x: {label: "Generation"},
+  y: {label: "Frequency of A₁ (p)", domain: [0, 1], grid: true},
+  marks: [
+    Plot.line(traj, {x: "t", y: "p", stroke: pal[0], strokeWidth: 2}),
+    Plot.ruleY([0]),
+    Plot.tip(traj, Plot.pointerX({x: "t", y: "p", title: d => `Generation ${d.t}\np = ${d.p.toFixed(4)}`}))
+  ]
+})
+```
+
+### Change per generation at each allele frequency
+
+The curve shows Δ*p* for every starting *p*. Where it crosses zero with a downward slope, there is a stable equilibrium.
+
+```{ojs}
+Plot.plot({
+  height: 260,
+  marginLeft: 60,
+  x: {label: "Frequency of A₁ (p)", domain: [0, 1]},
+  y: {label: "Δp per generation", grid: true},
+  marks: [
+    Plot.ruleY([0], {stroke: "currentColor", strokeOpacity: 0.5}),
+    Plot.line(deltaCurve, {x: "p", y: "dp", stroke: pal[0], strokeWidth: 2}),
+    Plot.ruleX([p0], {strokeDasharray: "4,3"}),
+    Plot.tip(deltaCurve, Plot.pointerX({x: "p", y: "dp", title: d => `p = ${d.p.toFixed(3)}\nΔp = ${d.dp.toFixed(5)}`}))
+  ]
+})
+```
+
+## Things to try
+
+- With "Against recessive", start at *p* = 0.05. *p* climbs quickly to about 0.9, and then the last few percent of the recessive *A*~2~ take far longer to remove.
+- Compare "Against recessive" and "Against dominant" at the same *s*. The Δ*p* curves are mirror images skewed to opposite ends.
+- With "Overdominance", start at *p* = 0.05 and at *p* = 0.95. Both runs converge on the same equilibrium.

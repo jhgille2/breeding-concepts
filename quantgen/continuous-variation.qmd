@@ -1,0 +1,66 @@
+---
+title: "Continuous variation from many loci"
+description: "How many genes of small effect plus environmental noise produce a smooth, bell-shaped distribution."
+---
+
+## The idea
+
+Mendel's traits fall into distinct classes, yet most traits breeders care about (yield, height, maturity) vary continuously. Falconer & Mackay reconcile the two: a metric trait is influenced by many loci, each with a small effect, and by environmental variation. With one locus an F~2~ shows three genotype classes. With more loci the number of classes grows, adjacent classes differ by less, and environmental noise blurs them into a continuous, approximately normal distribution.
+
+For *n* unlinked additive loci, each segregating 1:2:1 in an F~2~ with effect *a* per allele, the genotypic values follow a binomial distribution with 2*n* + 1 classes and variance
+
+$$
+V_G = n \cdot \tfrac{1}{2} a^2 .
+$$
+
+In the widget the per-allele effect is scaled to *a* = √(2/*n*), so *V*~G~ stays at 1 as *n* changes. Environmental variance is set from the heritability: *V*~E~ = *V*~G~ (1 − *h*²) / *h*².
+
+*Source: Falconer & Mackay, chapter 6.*
+
+## Widget
+
+```{ojs}
+import {pal, rng, normal} from "../js/common.js"
+
+viewof nLoci = Inputs.range([1, 50], {value: 1, step: 1, label: "Segregating loci (n)"})
+viewof h2 = Inputs.range([0.05, 1], {value: 1, step: 0.05, label: "Heritability (h²)"})
+viewof nPlants = Inputs.range([200, 5000], {value: 2000, step: 100, label: "F₂ plants"})
+```
+
+```{ojs}
+plants = {
+  const u = rng(12345 + nLoci * 31 + nPlants);
+  const z = normal(u);
+  const a = Math.sqrt(2 / nLoci);
+  const sdE = h2 >= 1 ? 0 : Math.sqrt((1 - h2) / h2);
+  return d3.range(nPlants).map(() => {
+    let g = 0;
+    for (let l = 0; l < nLoci; l++) g += (u() < 0.5) + (u() < 0.5) - 1;
+    const G = g * a;
+    return {G, P: G + sdE * z()};
+  });
+}
+```
+
+```{ojs}
+Plot.plot({
+  height: 320,
+  marginLeft: 50,
+  x: {label: "Phenotype (standardized units)"},
+  y: {label: "Plants", grid: true},
+  marks: [
+    Plot.rectY(plants, Plot.binX({y: "count"}, {x: "P", thresholds: 60, fill: pal[0], inset: 1, tip: true})),
+    Plot.ruleY([0])
+  ]
+})
+```
+
+```{ojs}
+md`Genotype classes possible: **${2 * nLoci + 1}**. Observed phenotypic variance: **${d3.variance(plants, d => d.P).toFixed(2)}** (genetic ≈ 1, environmental ≈ ${(h2 >= 1 ? 0 : (1 - h2) / h2).toFixed(2)}).`
+```
+
+## Things to try
+
+- Start at *n* = 1 and *h*² = 1. You see three spikes in a 1:2:1 ratio. Raise *n* to 2, 3 and 5 and watch the classes multiply.
+- Keep *n* = 1 but lower *h*² to 0.3. Environmental noise alone can make a single-gene trait look continuous.
+- Set *n* = 20 and *h*² = 1. Even with no environmental variance the distribution is already close to normal.

@@ -1,0 +1,115 @@
+---
+title: "Genetic drift"
+description: "Random change in allele frequency in small populations."
+---
+
+## The idea
+
+In a finite population, the gametes that form the next generation are a random sample of the parents' gametes. Allele frequency therefore wanders by chance from one generation to the next, even with no selection. Each line eventually fixes one allele or the other. The chance that *A*~1~ is the one fixed equals its starting frequency *p*~0~.
+
+Across many replicate lines (subpopulations) of size *N*, the mean frequency stays at *p*~0~, but the lines spread apart. After *t* generations the variance among lines and the expected heterozygosity are
+
+$$
+\sigma^2_{p,t} = p_0 q_0\left[1 - \left(1 - \tfrac{1}{2N}\right)^t\right], \qquad
+H_t = H_0\left(1 - \tfrac{1}{2N}\right)^t .
+$$
+
+The loss of heterozygosity is the same thing as inbreeding: the inbreeding coefficient rises as *F*~t~ = 1 − (1 − 1/2*N*)^*t*^. This is why small breeding populations lose genetic variance.
+
+*Source: Falconer & Mackay, chapter 3.*
+
+## Widget
+
+Each line is one population of *N* diploid individuals, simulated by sampling 2*N* gametes every generation.
+
+```{ojs}
+import {pal, rng, binomial} from "../js/common.js"
+
+viewof N = Inputs.range([2, 200], {value: 20, step: 1, label: "Population size (N)"})
+viewof p0 = Inputs.range([0.05, 0.95], {value: 0.5, step: 0.05, label: "Starting frequency (p₀)"})
+viewof nLines = Inputs.range([1, 100], {value: 30, step: 1, label: "Replicate lines"})
+viewof gens = Inputs.range([10, 300], {value: 100, step: 10, label: "Generations"})
+viewof seed = Inputs.button("Run again", {value: 1, reduce: v => v + 1})
+```
+
+```{ojs}
+sim = {
+  const u = rng(seed * 2654435761);
+  const lines = [];
+  for (let l = 0; l < nLines; l++) {
+    let p = p0;
+    const path = [{line: l, t: 0, p}];
+    for (let t = 1; t <= gens; t++) {
+      p = binomial(u, 2 * N, p) / (2 * N);
+      path.push({line: l, t, p});
+    }
+    lines.push(path);
+  }
+  return lines;
+}
+
+summary = d3.range(gens + 1).map(t => {
+  const ps = sim.map(path => path[t].p);
+  const decay = (1 - 1 / (2 * N)) ** t;
+  return {
+    t,
+    obsVar: d3.variance(ps) ?? 0,
+    expVar: p0 * (1 - p0) * (1 - decay),
+    obsH: d3.mean(ps, p => 2 * p * (1 - p)),
+    expH: 2 * p0 * (1 - p0) * decay
+  };
+})
+
+final = sim.map(path => path[gens].p)
+fixed1 = final.filter(p => p === 1).length
+lost = final.filter(p => p === 0).length
+```
+
+```{ojs}
+Plot.plot({
+  height: 320,
+  marginLeft: 50,
+  x: {label: "Generation"},
+  y: {label: "Frequency of A₁", domain: [0, 1], grid: true},
+  marks: [
+    Plot.line(sim.flat(), {x: "t", y: "p", z: "line", stroke: pal[0], strokeOpacity: 0.35, strokeWidth: 1.5}),
+    Plot.ruleY([p0], {strokeDasharray: "4,3"})
+  ]
+})
+```
+
+```{ojs}
+md`After ${gens} generations: **${fixed1}** lines fixed *A*₁, **${lost}** lost it, and **${nLines - fixed1 - lost}** are still segregating. Expected share fixed for *A*₁ eventually: **${(p0 * 100).toFixed(0)}%**.`
+```
+
+### Variance among lines and heterozygosity within lines
+
+```{ojs}
+hetLong = summary.flatMap(d => [
+  {t: d.t, value: d.obsH, measure: "Heterozygosity within lines", kind: "simulated"},
+  {t: d.t, value: d.expH, measure: "Heterozygosity within lines", kind: "expected"},
+  {t: d.t, value: d.obsVar, measure: "Variance among lines", kind: "simulated"},
+  {t: d.t, value: d.expVar, measure: "Variance among lines", kind: "expected"}
+])
+
+Plot.plot({
+  height: 300,
+  marginLeft: 50,
+  x: {label: "Generation"},
+  y: {label: "Value", grid: true, domain: [0, 0.5]},
+  color: {legend: true, domain: ["Heterozygosity within lines", "Variance among lines"], range: [pal[0], pal[1]]},
+  marks: [
+    Plot.line(hetLong.filter(d => d.kind === "simulated"), {x: "t", y: "value", stroke: "measure", strokeWidth: 2}),
+    Plot.line(hetLong.filter(d => d.kind === "expected"), {x: "t", y: "value", stroke: "measure", strokeWidth: 2, strokeDasharray: "5,4"}),
+    Plot.tip(hetLong, Plot.pointerX({x: "t", y: "value", stroke: "measure", title: d => `${d.measure} (${d.kind})\ngeneration ${d.t}: ${d.value.toFixed(4)}`}))
+  ]
+})
+```
+
+Dashed lines are the expectations from the equations above, and solid lines are the simulated lines. Heterozygosity lost within lines reappears as variance among lines.
+
+## Things to try
+
+- Set *N* = 5 and then *N* = 100. Small populations fix alleles within a few dozen generations.
+- Set *p*~0~ = 0.1 and run 100 lines several times. About 10% of lines fix *A*~1~.
+- Use a single line to see how erratic one population's history is, even though the average across many lines is predictable.

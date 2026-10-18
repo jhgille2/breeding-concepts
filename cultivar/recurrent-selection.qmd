@@ -1,0 +1,101 @@
+---
+title: "Recurrent selection schemes"
+description: "Comparing mass, half-sib, full-sib, S1 and S2 family selection for gain per cycle and per year."
+---
+
+## The idea
+
+Recurrent selection improves a population cycle after cycle: evaluate individuals or families, select the best, intermate them, and repeat. Schemes differ in the type of unit evaluated, which changes three things at once: how much additive variance the units carry, how precisely they can be measured, and how many seasons a cycle takes.
+
+For a random-mating, non-inbred base population (ignoring epistasis), the expected gain per cycle when remnant seed of the selected units is recombined is
+
+| Scheme | Genetic variance among units | Additive variance in the numerator |
+|---|---|---|
+| Mass (both parents selected) | σ²~A~ + σ²~D~ | σ²~A~ |
+| Mass (selection after pollination) | σ²~A~ + σ²~D~ | ½ σ²~A~ |
+| Half-sib families | ¼ σ²~A~ | ¼ σ²~A~ |
+| Full-sib families | ½ σ²~A~ + ¼ σ²~D~ | ½ σ²~A~ |
+| S~1~ families | σ²~A~ + ¼ σ²~D~ | σ²~A~ |
+| S~2~ families | 1½ σ²~A~ + ³⁄₁₆ σ²~D~ | 1½ σ²~A~ |
+
+Gain per cycle = *k* × (numerator) / σ~P~, where σ²~P~ = (genetic variance among units) + σ²~e~ / *r* for family schemes, or + σ²~w~ (single-plant error) for mass selection. Gain per year divides by the years per cycle. These are the standard expressions in Fehr and in Hallauer, Carena & Miranda; they assume no dominance-by-additive covariance in the inbred families.
+
+*Source: Fehr, recurrent selection; Falconer & Mackay, chapters 13 and 16.*
+
+## Widget
+
+```{ojs}
+import {pal, intensity} from "../js/common.js"
+
+viewof vA = Inputs.range([0, 50], {value: 10, step: 1, label: "σ²A in the base population"})
+viewof vD = Inputs.range([0, 50], {value: 5, step: 1, label: "σ²D in the base population"})
+viewof vE = Inputs.range([0, 100], {value: 20, step: 1, label: "σ²e, plot error of a family mean"})
+viewof vW = Inputs.range([0, 300], {value: 80, step: 5, label: "σ²w, single-plant error (mass selection)"})
+viewof r = Inputs.range([1, 6], {value: 2, step: 1, label: "Replications of each family"})
+viewof psel = Inputs.range([0.02, 0.5], {value: 0.1, step: 0.01, label: "Proportion selected"})
+```
+
+**Years per cycle** (edit to match your crop and nursery options)
+
+```{ojs}
+viewof years = Inputs.form({
+  massBoth: Inputs.number({value: 1, min: 0.5, step: 0.5, label: "Mass (both)"}),
+  massOne: Inputs.number({value: 1, min: 0.5, step: 0.5, label: "Mass (one parent)"}),
+  hs: Inputs.number({value: 2, min: 0.5, step: 0.5, label: "Half-sib"}),
+  fs: Inputs.number({value: 2, min: 0.5, step: 0.5, label: "Full-sib"}),
+  s1: Inputs.number({value: 2, min: 0.5, step: 0.5, label: "S₁"}),
+  s2: Inputs.number({value: 3, min: 0.5, step: 0.5, label: "S₂"})
+})
+```
+
+```{ojs}
+k = intensity(psel)
+schemes = [
+  {name: "Mass (both)", gVar: vA + vD, num: vA, err: vW, y: years.massBoth},
+  {name: "Mass (one parent)", gVar: vA + vD, num: vA / 2, err: vW, y: years.massOne},
+  {name: "Half-sib", gVar: vA / 4, num: vA / 4, err: vE / r, y: years.hs},
+  {name: "Full-sib", gVar: vA / 2 + vD / 4, num: vA / 2, err: vE / r, y: years.fs},
+  {name: "S₁", gVar: vA + vD / 4, num: vA, err: vE / r, y: years.s1},
+  {name: "S₂", gVar: 1.5 * vA + 3 * vD / 16, num: 1.5 * vA, err: vE / r, y: years.s2}
+].map(s => {
+  const sdP = Math.sqrt(s.gVar + s.err);
+  const perCycle = sdP > 0 ? k * s.num / sdP : 0;
+  return {...s, perCycle, perYear: perCycle / s.y};
+})
+```
+
+```{ojs}
+long = schemes.flatMap(s => [
+  {name: s.name, measure: "Gain per cycle", value: s.perCycle},
+  {name: s.name, measure: "Gain per year", value: s.perYear}
+])
+
+Plot.plot({
+  height: 360,
+  marginLeft: 120,
+  x: {label: "Expected gain (trait units)", grid: true},
+  y: {label: null, domain: schemes.map(s => s.name)},
+  marginRight: 110,
+  fy: {label: null, domain: ["Gain per cycle", "Gain per year"]},
+  color: {domain: ["Gain per cycle", "Gain per year"], range: [pal[0], pal[1]]},
+  marks: [
+    Plot.barX(long, {x: "value", y: "name", fy: "measure", fill: "measure", insetTop: 2, insetBottom: 2, tip: true,
+      title: d => `${d.name}\n${d.measure}: ${d.value.toFixed(2)}`}),
+    Plot.ruleX([0])
+  ]
+})
+```
+
+```{ojs}
+md`Selection intensity *k* = **${k.toFixed(2)}**. Best gain per year: **${d3.greatest(schemes, s => s.perYear).name}** (${d3.max(schemes, s => s.perYear).toFixed(2)} per year).
+
+| Scheme | σ²<sub>P</sub> among units | Gain per cycle | Years | Gain per year |
+|---|---|---|---|---|
+${schemes.map(s => `| ${s.name} | ${(s.gVar + s.err).toFixed(1)} | ${s.perCycle.toFixed(2)} | ${s.y} | ${s.perYear.toFixed(2)} |`).join("\n")}`
+```
+
+## Things to try
+
+- Raise σ²w. Mass selection loses ground because single plants are measured so poorly.
+- Raise σ²D. S~1~ and S~2~ family variances grow, which slightly dilutes their response (the denominator rises but the numerator does not).
+- Shorten S~1~ to 1 year per cycle, as with off-season nurseries for selfing and recombination. It becomes the fastest scheme per year with the default settings.

@@ -1,0 +1,87 @@
+---
+title: "Genetic gain per year"
+description: "The breeder's equation in time units, tying selection intensity, accuracy, variance and cycle length together."
+---
+
+## The idea
+
+Both books end up at the same question: how much does a breeding program improve per year? Writing the breeder's equation in terms of accuracy and cycle length gives
+
+$$
+\Delta G_{\text{year}} = \frac{i \; r \; \sigma_A}{L} ,
+$$
+
+where *i* is selection intensity, *r* is the **accuracy** of selection (the correlation between the selection criterion and true breeding value; *r* = *h* when selecting on own phenotype), σ~A~ is the additive genetic standard deviation, and *L* is the number of years per cycle (the generation interval).
+
+The equation is a checklist. Gain can be raised by selecting harder (*i*), measuring better (*r*: more reps, locations, relatives or markers), keeping variance in the population (σ~A~), or cycling faster (*L*). Most changes trade one term against another, for example early-generation selection shortens *L* but lowers *r*. This page lets you compare up to three programs on that trade-off.
+
+*Source: Falconer & Mackay, chapters 11 and 13; Fehr, selection theory.*
+
+## Widget
+
+```{ojs}
+import {pal, intensity} from "../js/common.js"
+
+viewof sdA = Inputs.range([0.1, 10], {value: 2, step: 0.1, label: "Additive SD (σA)"})
+```
+
+```{ojs}
+programInput = (name, p, r, L) => Inputs.form({
+  name: Inputs.text({value: name, label: "Name"}),
+  p: Inputs.range([0.01, 0.8], {value: p, step: 0.01, label: "Proportion selected"}),
+  r: Inputs.range([0.05, 1], {value: r, step: 0.01, label: "Accuracy (r)"}),
+  L: Inputs.range([0.5, 10], {value: L, step: 0.5, label: "Years per cycle (L)"})
+})
+```
+
+**Program 1**
+
+```{ojs}
+viewof prog1 = programInput("Conventional", 0.1, 0.7, 5)
+```
+
+**Program 2**
+
+```{ojs}
+viewof prog2 = programInput("Early testing", 0.2, 0.5, 3)
+```
+
+**Program 3**
+
+```{ojs}
+viewof prog3 = programInput("Rapid cycling", 0.1, 0.45, 1.5)
+```
+
+```{ojs}
+progs = [prog1, prog2, prog3].map((pr, j) => {
+  const i = intensity(pr.p);
+  return {...pr, slot: j, i, perCycle: i * pr.r * sdA, perYear: i * pr.r * sdA / pr.L};
+})
+
+Plot.plot({
+  height: 200,
+  marginLeft: 120,
+  marginRight: 60,
+  x: {label: "Genetic gain per year (trait units)", grid: true},
+  y: {label: null, domain: progs.map(d => d.name)},
+  marks: [
+    Plot.barX(progs, {x: "perYear", y: "name", fill: d => pal[d.slot], insetTop: 4, insetBottom: 4, tip: true,
+      title: d => `${d.name}\ni = ${d.i.toFixed(2)}, r = ${d.r}, L = ${d.L} yr\ngain per cycle ${d.perCycle.toFixed(2)}\ngain per year ${d.perYear.toFixed(3)}`}),
+    Plot.text(progs, {x: "perYear", y: "name", text: d => d.perYear.toFixed(2), dx: 6, textAnchor: "start"}),
+    Plot.ruleX([0])
+  ]
+})
+```
+
+```{ojs}
+md`| Program | *i* | *r* | Gain per cycle | *L* (years) | **Gain per year** |
+|---|---|---|---|---|---|
+${progs.map(d => `| ${d.name} | ${d.i.toFixed(2)} | ${d.r.toFixed(2)} | ${d.perCycle.toFixed(2)} | ${d.L} | **${d.perYear.toFixed(3)}** |`).join("\n")}`
+```
+
+## Things to try
+
+- Halve *L* for the conventional program. Gain per year doubles, the same as doubling accuracy.
+- Lower the accuracy of rapid cycling until it falls behind the conventional program. That break-even accuracy is a target for any faster scheme, such as one using genomic prediction.
+
+Related pages: [selection intensity](../quantgen/selection-intensity.qmd), [entry-mean heritability](../cultivar/heritability-entry-mean.qmd), [expected gain](../cultivar/expected-gain.qmd), [recurrent selection](../cultivar/recurrent-selection.qmd).

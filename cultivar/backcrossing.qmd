@@ -1,0 +1,140 @@
+---
+title: "Backcrossing"
+description: "Recovering the recurrent parent while carrying one target gene, and the linkage drag that comes with it."
+---
+
+## The idea
+
+Backcrossing transfers a gene (for example a disease-resistance allele) from a donor into an adapted **recurrent parent**. The F~1~ is crossed back to the recurrent parent, carriers of the target allele are kept, and the cycle repeats. Without any selection on the rest of the genome, each backcross halves the remaining donor genome, so after *t* backcrosses (BC~*t*~F~1~) the expected recurrent-parent proportion is
+
+$$
+1 - \left(\tfrac{1}{2}\right)^{t+1} :\qquad \text{BC}_1\;75\%,\quad \text{BC}_2\;87.5\%,\quad \text{BC}_3\;93.75\%,\quad \ldots
+$$
+
+That average hides two things. First, it varies a lot among individuals, so choosing the carrier with the least donor genome (**background selection**, usually with markers) speeds recovery. Second, the chromosome carrying the target gene is selected *for* donor DNA around the target, so it is cleaned up much more slowly. The donor segment dragged along with the target is **linkage drag**. On a long chromosome its expected length after *t* backcrosses is roughly 2/*t* Morgans (Hanson 1959), so about 33 cM remains even after six backcrosses.
+
+*Source: Fehr, backcross method.*
+
+## Widget
+
+The simulation follows many independent backcross programs. Each generation it produces a number of progeny, keeps the carriers of the target allele, and advances one carrier, either at random or the one with the least donor genome. Crossovers follow the Haldane map function. Defaults approximate soybean: 20 chromosomes of about 125 cM.
+
+```{ojs}
+import {pal, muted, rng} from "../js/common.js"
+
+viewof nBC = Inputs.range([1, 8], {value: 6, step: 1, label: "Backcross generations"})
+viewof nProg = Inputs.range([1, 50], {value: 10, step: 1, label: "Progeny screened per generation"})
+viewof bgSel = Inputs.toggle({label: "Background selection (pick the carrier with least donor genome)", value: false})
+viewof nChr = Inputs.range([1, 30], {value: 20, step: 1, label: "Chromosomes"})
+viewof chrLen = Inputs.range([50, 300], {value: 125, step: 5, label: "Chromosome length (cM)"})
+viewof targetPos = Inputs.range([0, 1], {value: 0.5, step: 0.05, label: "Target position (fraction along chromosome 1)"})
+viewof seed = Inputs.button("Run again", {value: 1, reduce: v => v + 1})
+```
+
+```{ojs}
+sim = {
+  const u = rng(seed * 97 + nChr * 13 + chrLen);
+  const L = chrLen / 100;
+  const T = targetPos * L;
+  const poisson = lambda => { let k = 0, p = Math.exp(-lambda), s = p, x = u(); while (x > s) { k++; p *= lambda / k; s += p; } return k; };
+
+  // An individual is an array of chromosomes; each is a sorted list of donor segments [start, end]
+  // on the non-recurrent homolog (the other homolog is entirely recurrent parent).
+  const gamete = ind => ind.map(segs => {
+    const xs = Array.from({length: poisson(L)}, () => u() * L).sort((a, b) => a - b);
+    const cuts = [0, ...xs, L];
+    let fromMosaic = u() < 0.5;
+    const out = [];
+    for (let j = 0; j < cuts.length - 1; j++) {
+      if (fromMosaic) {
+        for (const [s, e] of segs) {
+          const a = Math.max(s, cuts[j]), b = Math.min(e, cuts[j + 1]);
+          if (b > a) out.push([a, b]);
+        }
+      }
+      fromMosaic = !fromMosaic;
+    }
+    // merge touching pieces
+    const merged = [];
+    for (const seg of out) {
+      const last = merged[merged.length - 1];
+      if (last && Math.abs(last[1] - seg[0]) < 1e-12) last[1] = seg[1]; else merged.push([...seg]);
+    }
+    return merged;
+  });
+  const donorLen = ind => d3.sum(ind, segs => d3.sum(segs, ([s, e]) => e - s));
+  const carries = ind => ind[0].some(([s, e]) => s <= T && T <= e);
+  const dragLen = ind => { const seg = ind[0].find(([s, e]) => s <= T && T <= e); return seg ? seg[1] - seg[0] : 0; };
+
+  const reps = 150;
+  const genome = nChr * L;
+  const rows = [];
+  let example = null;
+  for (let rep = 0; rep < reps; rep++) {
+    let ind = Array.from({length: nChr}, () => [[0, L]]); // F1
+    for (let g = 1; g <= nBC; g++) {
+      let carriers = [];
+      while (carriers.length === 0) {
+        carriers = Array.from({length: nProg}, () => gamete(ind)).filter(carries);
+      }
+      ind = bgSel ? d3.least(carriers, donorLen) : carriers[Math.floor(u() * carriers.length)];
+      rows.push({rep, g, rp: 1 - donorLen(ind) / (2 * genome), drag: 100 * dragLen(ind)});
+    }
+    if (rep === 0) example = ind;
+  }
+  return {rows, example, L, T};
+}
+
+byGen = d3.range(1, nBC + 1).map(g => {
+  const r = sim.rows.filter(d => d.g === g);
+  return {g, rp: d3.mean(r, d => d.rp), lo: d3.quantile(r, 0.05, d => d.rp), hi: d3.quantile(r, 0.95, d => d.rp),
+          expected: 1 - 0.5 ** (g + 1), drag: d3.mean(r, d => d.drag)};
+})
+```
+
+```{ojs}
+Plot.plot({
+  height: 300,
+  marginLeft: 55,
+  x: {label: "Backcross generation (BCₜF₁)", ticks: nBC},
+  y: {label: "Recurrent-parent genome", tickFormat: "%", domain: [0.5, 1], grid: true},
+  color: {legend: true, domain: ["Simulated mean (5–95% band)", "Expected with no selection"], range: [pal[0], muted]},
+  marks: [
+    Plot.areaY(byGen, {x: "g", y1: "lo", y2: "hi", fill: pal[0], fillOpacity: 0.15}),
+    Plot.line(byGen, {x: "g", y: "expected", stroke: muted, strokeWidth: 2, strokeDasharray: "5,4"}),
+    Plot.line(byGen, {x: "g", y: "rp", stroke: pal[0], strokeWidth: 2, marker: "circle"}),
+    Plot.tip(byGen, Plot.pointerX({x: "g", y: "rp", title: d => `BC${d.g}F1\nsimulated ${(100 * d.rp).toFixed(1)}% (90% of programs between ${(100 * d.lo).toFixed(1)}% and ${(100 * d.hi).toFixed(1)}%)\nexpected ${(100 * d.expected).toFixed(2)}%\ndonor segment at target ${d.drag.toFixed(0)} cM`}))
+  ]
+})
+```
+
+```{ojs}
+md`After BC${nBC}F1: recurrent-parent genome **${(100 * byGen[nBC - 1].rp).toFixed(1)}%** on average (expected without selection ${(100 * byGen[nBC - 1].expected).toFixed(1)}%). Donor segment around the target: **${byGen[nBC - 1].drag.toFixed(0)} cM** on average.`
+```
+
+### One example program after the last backcross
+
+Each bar is the non-recurrent homolog of one chromosome. Orange stretches are donor DNA; the dark tick on chromosome 1 marks the target gene.
+
+```{ojs}
+exampleSegs = sim.example.flatMap((segs, c) => segs.map(([s, e]) => ({chr: c + 1, s: 100 * s, e: 100 * e})))
+
+Plot.plot({
+  height: Math.max(160, nChr * 16 + 40),
+  marginLeft: 55,
+  x: {label: "Position (cM)", domain: [0, chrLen]},
+  y: {label: "Chromosome", domain: d3.range(1, nChr + 1)},
+  marks: [
+    Plot.barX(d3.range(1, nChr + 1), {x1: 0, x2: chrLen, y: d => d, fill: muted, fillOpacity: 0.35, insetTop: 3, insetBottom: 3}),
+    Plot.barX(exampleSegs, {x1: "s", x2: "e", y: "chr", fill: pal[1], insetTop: 3, insetBottom: 3, tip: true,
+      title: d => `Chromosome ${d.chr}\ndonor ${d.s.toFixed(0)}–${d.e.toFixed(0)} cM (${(d.e - d.s).toFixed(0)} cM)`}),
+    Plot.tickX([{x: targetPos * chrLen, y: 1}], {x: "x", y: "y", stroke: "currentColor", strokeWidth: 3})
+  ]
+})
+```
+
+## Things to try
+
+- Compare random carriers with background selection at 10 progeny. Background selection reaches about the same genome recovery in roughly two fewer backcrosses.
+- Watch the donor segment around the target. With random carriers about 30 cM is still attached after six backcrosses. Background selection roughly halves it, because the target chromosome counts toward total donor genome, but markers flanking the target shrink it faster still.
+- Move the target to the end of the chromosome. Drag is cut roughly in half, because donor DNA can only extend on one side.

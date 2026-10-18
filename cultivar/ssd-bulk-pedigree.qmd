@@ -1,0 +1,98 @@
+---
+title: "Single-seed descent vs bulk vs pedigree"
+description: "When lines are derived, how genetic variance splits between and within lines, and how fast each method gets there."
+---
+
+## The idea
+
+The three classic methods for self-pollinated crops all take a cross from F~2~ toward homozygous lines. They differ in **when** selection among lines starts and **how fast** generations are advanced.
+
+- **Pedigree:** single plants are selected from F~2~ onward and their progeny grown as families, so selection starts early, on single plants or small rows with low heritability, usually one field generation per year.
+- **Bulk:** the population is harvested in bulk each generation with little or no artificial selection, and lines are derived after several generations of selfing.
+- **Single-seed descent (SSD):** one seed per plant is advanced each generation, often in a greenhouse or off-season nursery, to reach homozygosity quickly with every F~2~ plant represented. Lines are then derived and tested.
+
+Selfing redistributes additive genetic variance. For lines derived from single F~*t*~ plants and grown to homozygosity, with σ²~A~ defined in the F~2~ and inbreeding *F* = 1 − (½)^*t*−2^ of the F~*t*~ plant relative to the F~2~,
+
+$$
+\sigma^2_{\text{among lines}} = (1 + F)\,\sigma^2_A, \qquad \sigma^2_{\text{within lines}} = (1 - F)\,\sigma^2_A .
+$$
+
+F~2~-derived lines carry only half of the eventual additive variance among them. Lines derived later carry nearly all of it (2σ²~A~). This is the genetic argument for delaying line derivation, as SSD does, and for doing it quickly.
+
+*Source: Fehr, methods for self-pollinated species; Falconer & Mackay, chapter 15.*
+
+## Widget
+
+```{ojs}
+import {pal, intensity} from "../js/common.js"
+
+viewof deriv = Inputs.range([2, 8], {value: 5, step: 1, label: "Generation lines are derived from (F_t)"})
+viewof vA = Inputs.range([1, 20], {value: 4, step: 0.5, label: "σ²A in the F₂"})
+viewof vErr = Inputs.range([0, 40], {value: 8, step: 0.5, label: "Error variance of a line mean"})
+viewof psel = Inputs.range([0.02, 0.5], {value: 0.1, step: 0.01, label: "Proportion of lines selected"})
+viewof fieldGPY = Inputs.range([1, 2], {value: 1, step: 1, label: "Field generations per year (pedigree, bulk)"})
+viewof ssdGPY = Inputs.range([1, 5], {value: 3, step: 1, label: "SSD generations per year"})
+```
+
+```{ojs}
+partition = d3.range(2, 9).flatMap(t => {
+  const F = 1 - 0.5 ** (t - 2);
+  return [
+    {t: `F${t}`, comp: "Among lines", value: (1 + F) * vA},
+    {t: `F${t}`, comp: "Within lines", value: (1 - F) * vA}
+  ];
+})
+Fd = 1 - 0.5 ** (deriv - 2)
+among = (1 + Fd) * vA
+gain = intensity(psel) * among / Math.sqrt(among + vErr)
+gainF2 = intensity(psel) * vA / Math.sqrt(vA + vErr)
+```
+
+```{ojs}
+Plot.plot({
+  height: 300,
+  marginLeft: 50,
+  x: {label: "Generation lines are derived from", domain: d3.range(2, 9).map(t => `F${t}`)},
+  y: {label: "Additive variance at homozygosity", grid: true},
+  color: {legend: true, domain: ["Among lines", "Within lines"], range: [pal[0], pal[3]]},
+  marks: [
+    Plot.barY(partition, {x: "t", y: "value", fill: "comp", insetLeft: 2, insetRight: 2, tip: true,
+      title: d => `${d.t}-derived lines\n${d.comp}: ${d.value.toFixed(2)}`}),
+    Plot.ruleY([0]),
+    Plot.ruleX([`F${deriv}`], {stroke: "currentColor", strokeOpacity: 0.15, strokeWidth: 40})
+  ]
+})
+```
+
+```{ojs}
+md`F${deriv}-derived lines: variance among lines = **${among.toFixed(2)}** (${(100 * among / (2 * vA)).toFixed(0)}% of the total 2σ²<sub>A</sub>). Expected gain from selecting the best ${(psel * 100).toFixed(0)}% of lines: **${gain.toFixed(2)}**, compared with **${gainF2.toFixed(2)}** for F2-derived lines.`
+```
+
+### Time to derive lines
+
+```{ojs}
+timing = [
+  {method: "Pedigree", years: (deriv - 2) / fieldGPY, note: "selection on plants and families every generation"},
+  {method: "Bulk", years: (deriv - 2) / fieldGPY, note: "little selection until lines are derived"},
+  {method: "Single-seed descent", years: (deriv - 2) / ssdGPY, note: "every F₂ plant represented"}
+]
+
+Plot.plot({
+  height: 170,
+  marginLeft: 140,
+  x: {label: `Years from F₂ to F${deriv} plants`, grid: true},
+  y: {label: null},
+  marks: [
+    Plot.barX(timing, {x: "years", y: "method", fill: pal[0], insetTop: 4, insetBottom: 4, tip: true,
+      title: d => `${d.method}: ${d.years.toFixed(1)} years\n${d.note}`}),
+    Plot.text(timing, {x: "years", y: "method", text: d => `${d.years.toFixed(1)} yr`, dx: 6, textAnchor: "start"}),
+    Plot.ruleX([0])
+  ]
+})
+```
+
+## Things to try
+
+- Move derivation from F~2~ to F~6~. Variance among lines climbs from σ²~A~ toward 2σ²~A~, and so does the expected gain from selecting among them.
+- Raise the error variance. Gains fall at every derivation generation, but the relative advantage of late derivation widens, from about 1.4× with no error toward 2× when error dominates.
+- Set SSD to 1 generation per year. SSD loses its speed advantage, leaving only its genetic advantage of keeping every F~2~ plant represented.

@@ -1,6 +1,8 @@
 project:
   type: website
   output-dir: _site
+  resources:
+    - js/
 
 website:
   title: "Breeding Concepts"
@@ -22,13 +24,44 @@ website:
     search: true
     contents:
       - index.qmd
-      - section: "Quantitative genetics"
+      - section: "Populations and gene frequency"
         contents:
           - quantgen/hardy-weinberg.qmd
-          - quantgen/heritability-selection.qmd
-      - section: "Cultivar development"
+          - quantgen/selection-single-locus.qmd
+      - section: "Drift and inbreeding"
         contents:
+          - quantgen/genetic-drift.qmd
           - cultivar/selfing-homozygosity.qmd
+      - section: "Genetic values and variance"
+        contents:
+          - quantgen/continuous-variation.qmd
+          - quantgen/genotypic-values.qmd
+          - quantgen/variance-components.qmd
+      - section: "Heritability"
+        contents:
+          - cultivar/heritability-entry-mean.qmd
+      - section: "Selection"
+        contents:
+          - quantgen/heritability-selection.qmd
+          - quantgen/selection-intensity.qmd
+          - cultivar/expected-gain.qmd
+      - section: "Inbreeding and crossbreeding"
+        contents:
+          - quantgen/inbreeding-depression.qmd
+      - section: "Self-pollinated crop methods"
+        contents:
+          - cultivar/ssd-bulk-pedigree.qmd
+          - cultivar/backcrossing.qmd
+      - section: "Population improvement"
+        contents:
+          - cultivar/recurrent-selection.qmd
+      - section: "Field testing"
+        contents:
+          - cultivar/resource-allocation.qmd
+      - section: "Across both books"
+        contents:
+          - general/gain-per-year.qmd
+          - general/glossary.qmd
       - roadmap.qmd
 
 format:

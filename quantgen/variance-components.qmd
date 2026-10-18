@@ -1,0 +1,67 @@
+---
+title: "Partitioning genetic variance"
+description: "Additive and dominance variance as functions of allele frequency and dominance."
+---
+
+## The idea
+
+Genetic variance can be split into the variance of breeding values (**additive variance**, *V*~A~) and the variance of dominance deviations (**dominance variance**, *V*~D~). For a single locus with values +*a*, *d*, −*a* (see [genotypic values](genotypic-values.qmd)):
+
+$$
+V_A = 2pq\,\alpha^2 = 2pq\,[a + d(q - p)]^2, \qquad V_D = (2pqd)^2 .
+$$
+
+*V*~G~ = *V*~A~ + *V*~D~ (plus interaction variance *V*~I~ when loci interact). Only *V*~A~ causes resemblance between parent and offspring and response to selection, so how genetic variance divides between the two components matters for breeding.
+
+Two points stand out. First, *V*~A~ and *V*~D~ depend on allele frequency, not only on how genes act. A locus with complete dominance contributes mostly additive variance when the recessive allele is common, and mostly dominance variance when it is rare. Second, in an F~2~ (*p* = ½) the formulas simplify to *V*~A~ = ½*a*² and *V*~D~ = ¼*d*².
+
+*Source: Falconer & Mackay, chapter 8.*
+
+## Widget
+
+```{ojs}
+import {pal} from "../js/common.js"
+
+viewof a = Inputs.range([0, 2], {value: 1, step: 0.05, label: "Homozygote effect (a)"})
+viewof d = Inputs.range([-1, 3], {value: 1, step: 0.05, label: "Dominance (d)"})
+viewof p = Inputs.range([0, 1], {value: 0.5, step: 0.01, label: "Frequency of A₁ (p)"})
+```
+
+```{ojs}
+vc = x => {
+  const q = 1 - x, al = a + d * (q - x);
+  return {p: x, VA: 2 * x * q * al * al, VD: (2 * x * q * d) ** 2};
+}
+curve = d3.range(0, 1.0001, 0.01).map(vc)
+now = vc(p)
+long = curve.flatMap(r => [
+  {p: r.p, value: r.VA, comp: "Additive (VA)"},
+  {p: r.p, value: r.VD, comp: "Dominance (VD)"},
+  {p: r.p, value: r.VA + r.VD, comp: "Total genetic (VG)"}
+])
+```
+
+```{ojs}
+Plot.plot({
+  height: 320,
+  marginLeft: 55,
+  x: {label: "Frequency of A₁ (p)"},
+  y: {label: "Variance", grid: true},
+  color: {legend: true, domain: ["Additive (VA)", "Dominance (VD)", "Total genetic (VG)"], range: [pal[0], pal[1], "#888"]},
+  marks: [
+    Plot.line(long, {x: "p", y: "value", stroke: "comp", strokeWidth: 2}),
+    Plot.ruleX([p], {strokeDasharray: "4,3"}),
+    Plot.tip(long, Plot.pointerX({x: "p", y: "value", stroke: "comp", title: d => `${d.comp}\np = ${d.p.toFixed(2)}: ${d.value.toFixed(3)}`}))
+  ]
+})
+```
+
+```{ojs}
+md`At *p* = ${p.toFixed(2)}: *V*<sub>A</sub> = **${now.VA.toFixed(3)}**, *V*<sub>D</sub> = **${now.VD.toFixed(3)}**, so additive variance is **${(now.VA + now.VD > 0 ? 100 * now.VA / (now.VA + now.VD) : 0).toFixed(0)}%** of genetic variance.`
+```
+
+## Things to try
+
+- Set *d* = 0. Dominance variance disappears and *V*~A~ peaks at *p* = 0.5.
+- Set *d* = *a* = 1 (complete dominance of *A*~1~). *V*~A~ peaks when the recessive *A*~2~ is at *q* = 0.75, and *V*~D~ overtakes *V*~A~ once the recessive becomes rarer than *q* = ⅓ (*p* > ⅔).
+- Set *d* = 2 (overdominance). There is a frequency at which *V*~A~ is zero: all genetic variance is dominance, and selection would make no progress.
