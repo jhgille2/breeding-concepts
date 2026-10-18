@@ -13,10 +13,24 @@ The pages are study aids, not a substitute for the books. Chapter references poi
 
 ## Pages so far
 
-| Concept | Source | What the widget shows |
-|---|---|---|
-| [Hardy–Weinberg equilibrium](quantgen/hardy-weinberg.qmd) | Falconer & Mackay, ch. 1 | Genotype frequencies as a function of allele frequency, and how a finite sample departs from expectation |
-| [Heritability and response to selection](quantgen/heritability-selection.qmd) | Falconer & Mackay, ch. 8–11 | A simulated population where you set h² and the proportion selected, and compare R = h²S with the realized gain |
-| [Homozygosity under selfing](cultivar/selfing-homozygosity.qmd) | Fehr, ch. 2–3 | How quickly lines become homozygous across F generations for different numbers of segregating loci |
+**Populations and gene frequency.** [Hardy–Weinberg equilibrium](quantgen/hardy-weinberg.qmd) · [Selection at a single locus](quantgen/selection-single-locus.qmd)
 
-See the [roadmap](roadmap.qmd) for the planned pages.
+**Drift and inbreeding.** [Genetic drift](quantgen/genetic-drift.qmd) · [Homozygosity under selfing](cultivar/selfing-homozygosity.qmd)
+
+**Genetic values and variance.** [Continuous variation from many loci](quantgen/continuous-variation.qmd) · [Genotypic values and breeding value](quantgen/genotypic-values.qmd) · [Partitioning genetic variance](quantgen/variance-components.qmd)
+
+**Heritability.** [Heritability on a plot and entry-mean basis](cultivar/heritability-entry-mean.qmd)
+
+**Selection.** [Heritability and response to selection](quantgen/heritability-selection.qmd) · [Selection intensity](quantgen/selection-intensity.qmd) · [Expected gain per cycle and per year](cultivar/expected-gain.qmd)
+
+**Inbreeding and crossbreeding.** [Inbreeding depression](quantgen/inbreeding-depression.qmd)
+
+**Self-pollinated crop methods.** [Single-seed descent vs bulk vs pedigree](cultivar/ssd-bulk-pedigree.qmd) · [Backcrossing](cultivar/backcrossing.qmd)
+
+**Population improvement.** [Recurrent selection schemes](cultivar/recurrent-selection.qmd)
+
+**Field testing.** [Allocating reps, locations and years](cultivar/resource-allocation.qmd)
+
+**Across both books.** [Genetic gain per year](general/gain-per-year.qmd) · [Glossary and notation](general/glossary.qmd)
+
+The [roadmap](roadmap.qmd) lists every planned page.

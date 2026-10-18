@@ -1,0 +1,56 @@
+---
+title: "Glossary and notation"
+description: "Terms and symbols used across the site, with Falconer & Mackay and Fehr equivalents."
+---
+
+The two books use slightly different symbols for the same ideas. This site follows Falconer & Mackay for theory pages and Fehr for methods pages, and this table maps between them.
+
+## Notation
+
+| Concept | Falconer & Mackay | Fehr | Notes |
+|---|---|---|---|
+| Phenotypic, genetic and environmental variance | *V*~P~, *V*~G~, *V*~E~ | σ²~P~, σ²~G~, σ²~e~ | *V* and σ² mean the same thing |
+| Additive and dominance variance | *V*~A~, *V*~D~ | σ²~A~, σ²~D~ | |
+| Interaction (epistatic) variance | *V*~I~ | σ²~I~ (σ²~AA~, σ²~AD~, …) | |
+| Genotype × environment variance | *V*~GE~ | σ²~GL~, σ²~GY~, σ²~GLY~ | Fehr splits G × E by locations and years |
+| Narrow-sense heritability | *h*² = *V*~A~ / *V*~P~ | *h*² | Fehr often reports it on an entry-mean basis |
+| Broad-sense heritability | *H*² = *V*~G~ / *V*~P~ | *H* or *h*²~B~ | |
+| Selection differential | *S* | *S* | |
+| Intensity of selection | *i* = *S* / σ~P~ | *k* | standardized selection differential |
+| Response to selection | *R* | Δ*G*, *G*~c~ | per cycle; per year divides by cycle length |
+| Parental control | (implicit) | *c* | ½ if one parent selected, 1 if both |
+| Generation interval | *L* | *y* | years per cycle |
+| Inbreeding coefficient | *F* | *F* | |
+| Allele frequencies | *p*, *q* | *p*, *q* | |
+| Genotypic values | +*a*, *d*, −*a* | *a*, *d* | measured from the homozygote midpoint |
+| Average effect of substitution | α | | |
+
+## Terms
+
+**Additive variance.** Variance of breeding values; the part of genetic variance that makes offspring resemble parents and that responds to selection. See [partitioning genetic variance](../quantgen/variance-components.qmd).
+
+**Average effect.** The mean change in value from replacing one allele with another in the population, α = *a* + *d*(*q* − *p*). See [genotypic values](../quantgen/genotypic-values.qmd).
+
+**Backcross.** A cross of a hybrid back to one of its parents, used to transfer a gene into a recurrent parent. See [backcrossing](../cultivar/backcrossing.qmd).
+
+**Breeding value.** The value of an individual judged by the mean value of its progeny; twice the expected deviation of its progeny from the population mean.
+
+**Dominance deviation.** Genotypic value minus breeding value; the part of a genotype's value not passed on through single alleles.
+
+**Effective population size (*N*~e~).** The size of an idealized population that would drift or inbreed at the same rate as the real one.
+
+**Entry mean.** The average of a line or family over all its plots in a trial; the unit breeders usually select on. See [entry-mean heritability](../cultivar/heritability-entry-mean.qmd).
+
+**Genetic drift.** Random change in allele frequency from sampling in finite populations. See [genetic drift](../quantgen/genetic-drift.qmd).
+
+**Heritability.** The proportion of phenotypic variance due to breeding values (narrow sense) or to all genetic effects (broad sense). Specific to a population, an environment and a testing scheme.
+
+**Inbreeding depression.** The decline in mean performance with inbreeding, caused by directional dominance. See [inbreeding depression](../quantgen/inbreeding-depression.qmd).
+
+**Linkage drag.** Unwanted donor DNA carried along with a target gene because it is linked to it.
+
+**Recurrent selection.** Repeated cycles of selection and intermating to improve a population. See [recurrent selection schemes](../cultivar/recurrent-selection.qmd).
+
+**Selection intensity.** The selection differential in phenotypic standard deviations. See [selection intensity](../quantgen/selection-intensity.qmd).
+
+**Single-seed descent.** Advancing one seed per plant each generation to reach homozygosity quickly. See [SSD vs bulk vs pedigree](../cultivar/ssd-bulk-pedigree.qmd).

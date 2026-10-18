@@ -1,0 +1,90 @@
+---
+title: "Heritability on a plot and entry-mean basis"
+description: "Why heritability rises with replications, locations and years, and how to read it for a testing program."
+---
+
+## The idea
+
+Breeders rarely select on single plants. They select on the mean of an entry (a line or family) measured over *r* replications in *l* locations for *y* years. Each source of noise in that mean is divided by the number of times it is sampled, so heritability on an **entry-mean basis** is
+
+$$
+h^2 = \frac{\sigma^2_G}{\sigma^2_G + \dfrac{\sigma^2_{GL}}{l} + \dfrac{\sigma^2_{GY}}{y} + \dfrac{\sigma^2_{GLY}}{ly} + \dfrac{\sigma^2_e}{rly}} ,
+$$
+
+where σ²~G~ is the genetic variance among entries, σ²~GL~, σ²~GY~ and σ²~GLY~ are the genotype × location, genotype × year and three-way interaction variances, and σ²~e~ is the plot error variance. Heritability on a **single-plot basis** is the same expression with *r* = *l* = *y* = 1.
+
+Heritability is therefore not a fixed property of a trait. It belongs to a trait, a population and a testing scheme together. This is the heritability that goes into the expected gain from selecting among entries.
+
+*Source: Fehr, heritability; Falconer & Mackay, chapter 10.*
+
+## Widget
+
+The default variance components are illustrative values loosely typical of yield trials, where genotype × environment interaction and plot error are large relative to genetic variance.
+
+```{ojs}
+import {pal} from "../js/common.js"
+
+viewof vG = Inputs.range([0, 20], {value: 4, step: 0.5, label: "σ²G (genetic)"})
+viewof vGL = Inputs.range([0, 20], {value: 3, step: 0.5, label: "σ²GL (G × location)"})
+viewof vGY = Inputs.range([0, 20], {value: 1, step: 0.5, label: "σ²GY (G × year)"})
+viewof vGLY = Inputs.range([0, 20], {value: 4, step: 0.5, label: "σ²GLY (G × L × Y)"})
+viewof vE = Inputs.range([0, 40], {value: 12, step: 0.5, label: "σ²e (plot error)"})
+viewof r = Inputs.range([1, 6], {value: 2, step: 1, label: "Replications (r)"})
+viewof l = Inputs.range([1, 20], {value: 4, step: 1, label: "Locations (l)"})
+viewof y = Inputs.range([1, 4], {value: 1, step: 1, label: "Years (y)"})
+```
+
+```{ojs}
+h2 = (r, l, y) => vG / (vG + vGL / l + vGY / y + vGLY / (l * y) + vE / (r * l * y))
+parts = [
+  {source: "Genetic", value: vG},
+  {source: "G × location", value: vGL / l},
+  {source: "G × year", value: vGY / y},
+  {source: "G × L × Y", value: vGLY / (l * y)},
+  {source: "Plot error", value: vE / (r * l * y)}
+]
+```
+
+```{ojs}
+md`Entry-mean heritability with ${r} rep(s), ${l} location(s), ${y} year(s): **${h2(r, l, y).toFixed(2)}**. Single-plot heritability: **${h2(1, 1, 1).toFixed(2)}**.`
+```
+
+```{ojs}
+Plot.plot({
+  height: 150,
+  marginLeft: 10,
+  x: {label: "Share of the variance of an entry mean", tickFormat: "%", domain: [0, 1]},
+  color: {legend: true, domain: parts.map(d => d.source), range: [pal[0], pal[1], pal[3], pal[4], pal[6]]},
+  marks: [
+    Plot.barX(parts, Plot.stackX({x: "value", fill: "source", offset: "normalize", insetLeft: 1, insetRight: 1, tip: true,
+      title: d => `${d.source}: ${d.value.toFixed(2)}`}))
+  ]
+})
+```
+
+### Heritability as testing grows
+
+```{ojs}
+grid = [1, 2, 3, 4].flatMap(rr => d3.range(1, 21).map(ll => ({r: `${rr} rep${rr > 1 ? "s" : ""}`, l: ll, h2: h2(rr, ll, y)})))
+
+Plot.plot({
+  height: 300,
+  marginLeft: 50,
+  x: {label: "Locations"},
+  y: {label: "Entry-mean heritability", domain: [0, 1], grid: true},
+  color: {legend: true, domain: ["1 rep", "2 reps", "3 reps", "4 reps"], range: [pal[0], pal[1], pal[2], pal[6]]},
+  marks: [
+    Plot.line(grid, {x: "l", y: "h2", stroke: "r", strokeWidth: 2}),
+    Plot.ruleX([l], {strokeDasharray: "4,3"}),
+    Plot.tip(grid, Plot.pointer({x: "l", y: "h2", stroke: "r", title: d => `${d.r}, ${d.l} location(s)\nh² = ${d.h2.toFixed(3)}`}))
+  ]
+})
+```
+
+Curves are for the number of years currently selected.
+
+## Things to try
+
+- Raise σ²GL. Adding replications barely helps, but adding locations does, because extra reps only shrink plot error.
+- Set σ²e high and the interactions near zero. Now reps and locations are nearly interchangeable.
+- Compare 1 rep × 8 locations with 4 reps × 2 locations. Both use 8 plots per entry, but the first gives higher heritability whenever G × L is important. See [resource allocation](resource-allocation.qmd) for the full trade-off.

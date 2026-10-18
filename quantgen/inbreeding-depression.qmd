@@ -1,0 +1,72 @@
+---
+title: "Inbreeding depression"
+description: "Why the mean falls as inbreeding rises, and why it requires dominance."
+---
+
+## The idea
+
+Inbreeding moves genotype frequencies from heterozygotes into homozygotes without changing allele frequencies. With inbreeding coefficient *F*, the genotype frequencies at a locus are *p*² + *Fpq*, 2*pq*(1 − *F*) and *q*² + *Fpq*. Using the genotypic values +*a*, *d*, −*a*, the population mean becomes
+
+$$
+M_F = M_0 - 2Fpqd ,
+$$
+
+and summed over loci, *M*~F~ = *M*~0~ − 2*F* Σ *d pq*. Three consequences follow:
+
+1. **Dominance is required.** If *d* = 0 at every locus, inbreeding does not change the mean.
+2. **The decline is linear in *F*.** Each step of inbreeding costs the same amount of mean performance.
+3. **Direction of dominance matters.** Depression occurs when dominance is mostly in one direction (toward higher values), so the Σ*d* terms do not cancel.
+
+The same algebra run in reverse gives heterosis: crossing inbred lines restores heterozygosity, and the F~1~ recovers the lost performance.
+
+In a self-pollinated crop the breeding population is already highly inbred, so little depression remains. The concept matters most in cross-pollinated crops and in hybrid breeding.
+
+*Source: Falconer & Mackay, chapter 14.*
+
+## Widget
+
+The widget assumes *n* loci with identical effects and allele frequencies. Selfing generations are counted from a random-mating (*F* = 0) base, so *F* = 1 − (½)^*t*^ after *t* generations of selfing.
+
+```{ojs}
+import {pal} from "../js/common.js"
+
+viewof nLoci = Inputs.range([1, 100], {value: 20, step: 1, label: "Loci (n)"})
+viewof a = Inputs.range([0, 2], {value: 1, step: 0.05, label: "Homozygote effect per locus (a)"})
+viewof d = Inputs.range([-2, 3], {value: 0.8, step: 0.05, label: "Dominance per locus (d)"})
+viewof p = Inputs.range([0.01, 0.99], {value: 0.5, step: 0.01, label: "Frequency of increasing allele (p)"})
+```
+
+```{ojs}
+q = 1 - p
+M0 = nLoci * (a * (p - q) + 2 * d * p * q)
+MF = F => M0 - 2 * F * nLoci * p * q * d
+line = d3.range(0, 1.0001, 0.01).map(F => ({F, M: MF(F)}))
+selfing = d3.range(0, 7).map(t => ({t, F: 1 - 0.5 ** t, M: MF(1 - 0.5 ** t)}))
+```
+
+```{ojs}
+Plot.plot({
+  height: 320,
+  marginLeft: 55,
+  marginTop: 30,
+  x: {label: "Inbreeding coefficient (F)", domain: [0, 1]},
+  y: {label: "Population mean", grid: true},
+  marks: [
+    Plot.line(line, {x: "F", y: "M", stroke: pal[0], strokeWidth: 2}),
+    Plot.dot(selfing, {x: "F", y: "M", r: 5, fill: pal[1], stroke: "white", strokeWidth: 2, tip: true, title: d => `After ${d.t} generation(s) of selfing\nF = ${d.F.toFixed(3)}\nmean = ${d.M.toFixed(2)}`}),
+    Plot.text(selfing.slice(0, 4), {x: "F", y: "M", text: d => `S${d.t}`, dx: 10, dy: -10})
+  ]
+})
+```
+
+```{ojs}
+md`Mean at *F* = 0: **${M0.toFixed(2)}**. Mean of fully inbred lines (*F* = 1): **${MF(1).toFixed(2)}**. Total inbreeding depression: **${(M0 - MF(1)).toFixed(2)}** (${M0 !== 0 ? (100 * (M0 - MF(1)) / Math.abs(M0)).toFixed(0) + "% of the outbred mean" : "—"}). One generation of selfing removes half of it.`
+```
+
+Orange points mark successive generations of selfing (S0 to S6).
+
+## Things to try
+
+- Set *d* = 0. The line goes flat: no dominance, no inbreeding depression.
+- Set *d* negative. "Depression" turns into an increase, which is why the direction of dominance matters.
+- Move *p* toward 0 or 1. Depression shrinks because there is little heterozygosity left to lose.

@@ -1,0 +1,99 @@
+---
+title: "Selection intensity"
+description: "How the proportion selected sets the standardized selection differential."
+---
+
+## The idea
+
+When we keep the best fraction *p* of a normally distributed population (truncation selection), the selected individuals' mean lies *S* units above the population mean. Expressed in phenotypic standard deviations, this is the **intensity of selection**:
+
+$$
+i = \frac{S}{\sigma_P} = \frac{z}{p},
+$$
+
+where *z* is the height of the standard normal curve at the truncation point. Fehr writes the same quantity as *k*, the standardized selection differential. Because *i* depends only on *p*, it can be read from a table, and it plugs straight into the breeder's equation *R* = *i h*² σ~P~.
+
+Two practical points:
+
+- *i* rises with stronger selection, but with diminishing returns. Going from 50% to 10% selected more than doubles *i*, but going from 10% to 1% raises it by only about half.
+- With a small number of candidates, the expected mean of the best *k* of *n* is a little below the value for an infinite population with the same *p* = *k*/*n*.
+
+*Source: Falconer & Mackay, chapter 11; Fehr, selection theory.*
+
+## Widget
+
+```{ojs}
+import {pal, muted, dnorm, qnorm, intensity, rng, normal} from "../js/common.js"
+
+viewof p = Inputs.range([0.005, 0.95], {value: 0.2, step: 0.005, label: "Proportion selected (p)"})
+viewof nCand = Inputs.range([5, 500], {value: 50, step: 5, label: "Candidates (n), for the finite-sample check"})
+```
+
+```{ojs}
+x0 = qnorm(1 - p)
+iInf = intensity(p)
+curve = d3.range(-3.5, 3.5001, 0.02).map(x => ({x, y: dnorm(x), sel: x >= x0}))
+```
+
+```{ojs}
+Plot.plot({
+  height: 280,
+  marginLeft: 45,
+  x: {label: "Phenotype (σP units from the mean)", domain: [-3.5, 3.5]},
+  y: {label: "Density", grid: true},
+  marks: [
+    Plot.areaY(curve, {x: "x", y: "y", fill: muted, fillOpacity: 0.5}),
+    Plot.areaY(curve.filter(d => d.sel), {x: "x", y: "y", fill: pal[1], fillOpacity: 0.85}),
+    Plot.line(curve, {x: "x", y: "y", stroke: "currentColor", strokeWidth: 1.5}),
+    Plot.ruleX([0], {strokeDasharray: "4,3"}),
+    Plot.ruleX([iInf], {stroke: pal[1], strokeWidth: 2}),
+    Plot.text([{x: iInf, y: 0.42}], {x: "x", y: "y", text: () => `mean of selected = ${iInf.toFixed(2)} σP`, dx: 6, textAnchor: "start"})
+  ]
+})
+```
+
+```{ojs}
+finite = {
+  const k = Math.max(1, Math.round(p * nCand));
+  const z = normal(rng(4242 + nCand * 7 + k));
+  let total = 0;
+  const reps = 4000;
+  for (let r = 0; r < reps; r++) {
+    const xs = Float64Array.from({length: nCand}, z).sort();
+    let s = 0;
+    for (let j = nCand - k; j < nCand; j++) s += xs[j];
+    total += s / k;
+  }
+  return {k, iFinite: total / reps};
+}
+
+md`Truncation point: **${x0.toFixed(2)}** σ<sub>P</sub>. Intensity for an infinite population: *i* = **${iInf.toFixed(3)}**.
+Keeping the best **${finite.k}** of **${nCand}** candidates gives an expected *i* of **${finite.iFinite.toFixed(3)}** (from 4,000 simulated samples).`
+```
+
+### Intensity across the range of proportions selected
+
+```{ojs}
+iCurve = d3.range(0.005, 0.951, 0.005).map(q => ({p: q, i: intensity(q)}))
+
+Plot.plot({
+  height: 260,
+  marginLeft: 45,
+  x: {label: "Proportion selected (p)", type: "log", ticks: [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.9], tickFormat: d => `${d * 100}%`},
+  y: {label: "Selection intensity (i)", grid: true},
+  marks: [
+    Plot.line(iCurve, {x: "p", y: "i", stroke: pal[0], strokeWidth: 2}),
+    Plot.dot([{p, i: iInf}], {x: "p", y: "i", r: 5, fill: pal[0]}),
+    Plot.tip(iCurve, Plot.pointerX({x: "p", y: "i", title: d => `${(d.p * 100).toFixed(1)}% selected\ni = ${d.i.toFixed(3)}`}))
+  ]
+})
+```
+
+| Proportion selected | 50% | 20% | 10% | 5% | 1% |
+|---|---|---|---|---|---|
+| *i* | 0.80 | 1.40 | 1.75 | 2.06 | 2.67 |
+
+## Things to try
+
+- Compare 10% and 5% selected. Halving the proportion kept raises *i* by only about 18%.
+- Set *n* = 10 and *p* = 0.1 (keep the single best). The finite-sample intensity is about 1.54, well below the 1.75 from the table.

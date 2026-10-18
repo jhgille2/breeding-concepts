@@ -1,0 +1,68 @@
+---
+title: "Allocating replications, locations and years"
+description: "Spending a fixed number of plots per entry to get the most precise entry means."
+---
+
+## The idea
+
+The variance of an entry mean measured in *r* replications at *l* locations over *y* years is
+
+$$
+V_{\bar x} = \frac{\sigma^2_{GL}}{l} + \frac{\sigma^2_{GY}}{y} + \frac{\sigma^2_{GLY}}{ly} + \frac{\sigma^2_e}{rly} .
+$$
+
+Replications only divide the plot error. Locations divide the G × L and G × L × Y interactions too, and years are the only thing that divides G × Y. So when interactions are large, a fixed number of plots is better spread across more environments than stacked as more reps at a few. The same variance sets the smallest difference a trial can detect: with many degrees of freedom, LSD~0.05~ ≈ 1.96 √(2*V*).
+
+In practice the cost of a location (travel, a cooperator, a planter set-up) is higher than the cost of a plot, and years cost time, so the best plan balances precision against cost and cycle length.
+
+*Source: Fehr, field plot technique and testing; see also [entry-mean heritability](heritability-entry-mean.qmd).*
+
+## Widget
+
+Set the variance components and a budget in plots per entry. The heat map shows the variance of an entry mean for each combination of reps and locations in the chosen number of years; combinations over budget are blank.
+
+```{ojs}
+import {pal} from "../js/common.js"
+
+viewof vGL = Inputs.range([0, 20], {value: 3, step: 0.5, label: "σ²GL"})
+viewof vGY = Inputs.range([0, 20], {value: 1, step: 0.5, label: "σ²GY"})
+viewof vGLY = Inputs.range([0, 20], {value: 4, step: 0.5, label: "σ²GLY"})
+viewof vE = Inputs.range([0, 40], {value: 12, step: 0.5, label: "σ²e"})
+viewof budget = Inputs.range([2, 60], {value: 12, step: 1, label: "Plots per entry (r × l × y)"})
+viewof y = Inputs.range([1, 3], {value: 1, step: 1, label: "Years"})
+```
+
+```{ojs}
+V = (r, l, y) => vGL / l + vGY / y + vGLY / (l * y) + vE / (r * l * y)
+cells = d3.range(1, 7).flatMap(r => d3.range(1, 31).map(l => ({r, l, plots: r * l * y, V: V(r, l, y), ok: r * l * y <= budget})))
+allPlans = d3.range(1, 4).flatMap(yy => d3.range(1, 7).flatMap(r => d3.range(1, 31).map(l => ({r, l, y: yy, plots: r * l * yy, V: V(r, l, yy)}))))
+  .filter(d => d.plots <= budget)
+best = d3.least(cells.filter(d => d.ok), d => d.V)
+bestAny = d3.least(allPlans, d => d.V)
+```
+
+```{ojs}
+Plot.plot({
+  height: 260,
+  marginLeft: 50,
+  x: {label: "Locations", type: "band", domain: d3.range(1, 31), tickFormat: d => d % 5 === 0 || d === 1 ? d : ""},
+  y: {label: "Reps", type: "band", domain: d3.range(1, 7)},
+  color: {type: "linear", scheme: "blues", reverse: true, legend: true, label: "Variance of entry mean (lower is better)"},
+  marks: [
+    Plot.cell(cells.filter(d => d.ok), {x: "l", y: "r", fill: "V", inset: 1, tip: true,
+      title: d => `${d.r} rep(s) × ${d.l} location(s) × ${y} year(s) = ${d.plots} plots\nvariance ${d.V.toFixed(2)}, LSD ≈ ${(1.96 * Math.sqrt(2 * d.V)).toFixed(2)}`}),
+    best ? Plot.cell([best], {x: "l", y: "r", stroke: pal[1], strokeWidth: 3, fill: null}) : null
+  ]
+})
+```
+
+```{ojs}
+md`${best ? `Best plan in ${y} year(s): **${best.r} rep(s) × ${best.l} location(s)**, variance **${best.V.toFixed(2)}**, LSD₀.₀₅ ≈ **${(1.96 * Math.sqrt(2 * best.V)).toFixed(2)}** (outlined).` : "No plan fits this budget in the chosen number of years."}
+Best plan across 1–3 years: **${bestAny.r} rep(s) × ${bestAny.l} location(s) × ${bestAny.y} year(s)**, variance **${bestAny.V.toFixed(2)}**.`
+```
+
+## Things to try
+
+- Raise σ²e. Every plan that uses the full budget gets worse by the same amount, because with a fixed number of plots the error term is always σ²e divided by the total plots. Under a plot budget, extra reps never beat extra locations. Reps pay only when a location costs much more than a plot.
+- Set σ²GY high. Testing over more years becomes the best use of plots, even though it costs time.
+- Set all interactions to zero. Every plan with the same number of plots gives the same variance, so the choice comes down to cost.

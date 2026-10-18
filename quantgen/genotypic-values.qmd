@@ -1,0 +1,103 @@
+---
+title: "Genotypic values, average effect and breeding value"
+description: "Assigning values to genotypes, and what a parent passes on to its offspring."
+---
+
+## The idea
+
+Falconer & Mackay put the three genotypes at a locus on a common scale, measured from the midpoint of the two homozygotes:
+
+| Genotype | *A*~1~*A*~1~ | *A*~1~*A*~2~ | *A*~2~*A*~2~ |
+|---|---|---|---|
+| Genotypic value | +*a* | *d* | −*a* |
+
+*d* = 0 means no dominance, *d* = *a* complete dominance of *A*~1~, and *d* > *a* overdominance. With allele frequencies *p* (*A*~1~) and *q* (*A*~2~), the population mean is
+
+$$
+M = a(p - q) + 2dpq .
+$$
+
+A parent passes on alleles, not genotypes, so what matters for breeding is the **average effect** of substituting *A*~2~ with *A*~1~:
+
+$$
+\alpha = a + d(q - p).
+$$
+
+The **breeding value** of a genotype is the sum of the average effects of its alleles (expressed as a deviation from the mean): 2*q*α, (*q* − *p*)α and −2*p*α for the three genotypes. The leftover, genotypic value minus breeding value, is the **dominance deviation**. Breeding values sit on the least-squares regression line of genotypic value on the number of *A*~1~ alleles, weighted by genotype frequency, and α is the slope of that line.
+
+*Source: Falconer & Mackay, chapter 7.*
+
+## Widget
+
+```{ojs}
+import {pal} from "../js/common.js"
+
+viewof a = Inputs.range([0, 10], {value: 5, step: 0.5, label: "Homozygote effect (a)"})
+viewof d = Inputs.range([-10, 15], {value: 3, step: 0.5, label: "Dominance (d)"})
+viewof p = Inputs.range([0.01, 0.99], {value: 0.4, step: 0.01, label: "Frequency of A₁ (p)"})
+```
+
+```{ojs}
+q = 1 - p
+M = a * (p - q) + 2 * d * p * q
+alpha = a + d * (q - p)
+geno = [
+  {g: "A₂A₂", n: 0, freq: q * q, G: -a, BV: -2 * p * alpha},
+  {g: "A₁A₂", n: 1, freq: 2 * p * q, G: d, BV: (q - p) * alpha},
+  {g: "A₁A₁", n: 2, freq: p * p, G: a, BV: 2 * q * alpha}
+].map(r => ({...r, devG: r.G - M, D: (r.G - M) - r.BV}))
+```
+
+```{ojs}
+Plot.plot({
+  height: 340,
+  marginLeft: 60,
+  x: {label: "Number of A₁ alleles", domain: [-0.3, 2.3], ticks: [0, 1, 2]},
+  y: {label: "Value (deviation from population mean)", grid: true},
+  r: {domain: [0, 1], range: [5, 22]},
+  color: {legend: true, domain: ["Genotypic value", "Breeding value"], range: [pal[0], pal[1]]},
+  marks: [
+    Plot.ruleY([0], {stroke: "currentColor", strokeOpacity: 0.4}),
+    Plot.line(geno, {x: "n", y: "BV", stroke: pal[1], strokeWidth: 2}),
+    Plot.link(geno, {x1: "n", x2: "n", y1: "BV", y2: "devG", stroke: "currentColor", strokeOpacity: 0.5, strokeDasharray: "3,3"}),
+    Plot.dot(geno, {x: "n", y: "devG", r: "freq", fill: pal[0], stroke: "white", strokeWidth: 2, tip: true,
+      title: d => `${d.g}  (frequency ${d.freq.toFixed(3)})\ngenotypic value ${d.devG.toFixed(2)}\nbreeding value ${d.BV.toFixed(2)}\ndominance deviation ${d.D.toFixed(2)}`}),
+    Plot.dot(geno, {x: "n", y: "BV", r: 5, fill: pal[1]}),
+    Plot.text(geno, {x: "n", y: "devG", text: "g", dx: 26, textAnchor: "start"})
+  ]
+})
+```
+
+Blue circles are genotypic values (area ∝ genotype frequency); orange points and line are breeding values. Dashed segments are dominance deviations.
+
+```{ojs}
+md`Population mean *M* = **${M.toFixed(2)}**, average effect α = **${alpha.toFixed(2)}**.
+
+| Genotype | Frequency | Genotypic value (from *M*) | Breeding value | Dominance deviation |
+|---|---|---|---|---|
+${geno.slice().reverse().map(r => `| ${r.g} | ${r.freq.toFixed(3)} | ${r.devG.toFixed(2)} | ${r.BV.toFixed(2)} | ${r.D.toFixed(2)} |`).join("\n")}`
+```
+
+### Population mean across allele frequencies
+
+```{ojs}
+meanCurve = d3.range(0, 1.0001, 0.01).map(x => ({p: x, M: a * (2 * x - 1) + 2 * d * x * (1 - x)}))
+
+Plot.plot({
+  height: 240,
+  marginLeft: 50,
+  x: {label: "Frequency of A₁ (p)"},
+  y: {label: "Population mean (M)", grid: true},
+  marks: [
+    Plot.line(meanCurve, {x: "p", y: "M", stroke: pal[0], strokeWidth: 2}),
+    Plot.dot([{p, M}], {x: "p", y: "M", r: 5, fill: pal[0]}),
+    Plot.tip(meanCurve, Plot.pointerX({x: "p", y: "M", title: d => `p = ${d.p.toFixed(2)}\nM = ${d.M.toFixed(2)}`}))
+  ]
+})
+```
+
+## Things to try
+
+- Set *d* = 0. The genotypic values fall exactly on the line, so all variation is breeding value and dominance deviations vanish.
+- Set *d* = *a* (complete dominance) and move *p* toward 1. α shrinks toward zero: when *A*~1~ is common, swapping in one more copy barely changes the phenotype.
+- Set *d* > *a* (overdominance). There is a value of *p* where α = 0, so the parents' breeding values are all equal even though genotypes differ.

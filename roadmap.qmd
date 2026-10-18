@@ -2,43 +2,117 @@
 title: "Roadmap"
 ---
 
-Planned concept pages. Ticked items are live.
+Every planned concept page, grouped into modules that follow a learning path. Falconer & Mackay (F&M, 4th ed.) supplies the theory and Fehr the applied methods; where both books cover a topic they share one page. Linked items are live.
 
-## Falconer & Mackay, *Introduction to Quantitative Genetics*
 
-- [x] Hardy–Weinberg equilibrium
-- [ ] Changes of gene frequency: selection against recessives and dominants, mutation–selection balance
-- [ ] Genetic drift in small populations
-- [ ] Inbreeding and the inbreeding coefficient *F*
-- [ ] Effective population size
-- [ ] Genotypic values, average effect and breeding value
-- [ ] Partitioning genetic variance: *V*~A~, *V*~D~, *V*~I~
-- [ ] Resemblance between relatives
-- [x] Heritability and response to selection (R = h²S)
-- [ ] Truncation selection and selection intensity
-- [ ] Inbreeding depression and heterosis
-- [ ] Correlated response and genetic correlation
-- [ ] Selection index
-- [ ] Threshold characters
-- [ ] Genotype × environment interaction
+## Module 1: Populations and gene frequency
 
-## Fehr, *Principles of Cultivar Development*
+*F&M ch. 1–2*
 
-- [x] Homozygosity with selfing
-- [ ] Population size needed to recover a genotype
-- [ ] Pedigree method
-- [ ] Single-seed descent vs bulk vs pedigree
-- [ ] Backcrossing and recovery of the recurrent parent
-- [ ] Recurrent selection schemes
-- [ ] Doubled haploids
-- [ ] Hybrids and combining ability (GCA/SCA)
-- [ ] Synthetic cultivars
-- [ ] Mass selection and gridding
-- [ ] Field plot technique and precision
-- [ ] Allocating locations, years and replications
-- [ ] Cultivar stability analysis
+- [x] 1.1 [Hardy–Weinberg equilibrium](quantgen/hardy-weinberg.qmd)
+- [ ] 1.2 Migration: Two populations converging with migration rate *m*
+- [ ] 1.3 Mutation and mutation equilibrium: *p* over generations for forward/back mutation rates
+- [x] 1.4 [Selection at a single locus](quantgen/selection-single-locus.qmd)
+- [ ] 1.5 Mutation–selection balance: Equilibrium *q* vs *s* and *u*
 
-## Cross-cutting
+## Module 2: Small populations, drift and inbreeding
 
-- [ ] Genetic gain per year: ΔG = i·r·σ~A~ / L
-- [ ] Glossary and notation
+*F&M ch. 3–5; Fehr, genotype frequencies under inbreeding*
+
+- [x] 2.1 [Genetic drift](quantgen/genetic-drift.qmd)
+- [ ] 2.2 Effective population size: *N*e from sex ratio, fluctuating size, family-size variance
+- [ ] 2.3 Inbreeding coefficient and coancestry: Clickable pedigree; path-counting computes *F*
+- [ ] 2.4 Regular systems of inbreeding: Heterozygosity decline under selfing, full-sib, half-sib, backcrossing
+- [x] 2.5 [Homozygosity under selfing (Fehr)](cultivar/selfing-homozygosity.qmd)
+- [ ] 2.6 Population size to recover a genotype (Fehr): Required *n* for a target probability, *k* loci, F₂ vs BC vs F∞
+
+## Module 3: Genetic values and variance
+
+*F&M ch. 6–8*
+
+- [x] 3.1 [Continuous variation from many loci](quantgen/continuous-variation.qmd)
+- [x] 3.2 [Genotypic values, *a* and *d*](quantgen/genotypic-values.qmd)
+- [x] 3.3 [Average effect and breeding value](quantgen/genotypic-values.qmd)
+- [x] 3.4 [Partitioning genetic variance](quantgen/variance-components.qmd)
+- [ ] 3.5 Epistasis: Two-locus value table; how interaction variance appears
+- [ ] 3.6 Environmental variance and G×E: Reaction norms; crossover vs scale interaction
+
+## Module 4: Resemblance between relatives and heritability
+
+*F&M ch. 9–10; Fehr, heritability*
+
+- [ ] 4.1 Covariance between relatives: Table of covariances (P–O, HS, FS, sibs of inbreds) built from *V*A, *V*D
+- [ ] 4.2 Parent–offspring regression: Simulated families; slope = ½*h*² or *h*²
+- [ ] 4.3 Sib analysis and variance components: ANOVA of simulated half-sib/full-sib families; estimate *h*² and its SE
+- [x] 4.4 [Heritability on a plot vs entry-mean basis (Fehr)](cultivar/heritability-entry-mean.qmd)
+- [ ] 4.5 Precision of heritability estimates: SE of *h*² vs number of families and family size
+
+## Module 5: Selection
+
+*F&M ch. 11–13, 19; Fehr, selection and expected gain*
+
+- [x] 5.1 [Heritability and response to selection](quantgen/heritability-selection.qmd)
+- [x] 5.2 [Selection intensity](quantgen/selection-intensity.qmd)
+- [ ] 5.3 Response over generations and limits: Multi-generation simulation with finite loci; plateau and allele fixation
+- [x] 5.4 [Expected gain per cycle and per year (Fehr)](cultivar/expected-gain.qmd)
+- [ ] 5.5 Family, within-family and combined selection: Accuracy vs intraclass correlation and family size
+- [ ] 5.6 Correlated response and genetic correlation: Two-trait scatter; indirect vs direct selection
+- [ ] 5.7 Selection index: Index weights for two traits; response in each trait
+- [ ] 5.8 Independent culling and tandem selection: Compare with index at equal intensity
+
+## Module 6: Inbreeding, crossbreeding and hybrids
+
+*F&M ch. 14–16; Fehr, hybrid and synthetic cultivars*
+
+- [x] 6.1 [Inbreeding depression](quantgen/inbreeding-depression.qmd)
+- [ ] 6.2 Heterosis: F₁ and F₂ heterosis from allele-frequency differences and *d*
+- [ ] 6.3 Redistribution of variance under inbreeding: Among-line vs within-line variance vs *F* (2*F*·VA vs (1−F)·VA)
+- [ ] 6.4 General and specific combining ability: Diallel table; GCA/SCA from cross means
+- [ ] 6.5 Synthetic cultivars: Syn₂ prediction from parents and F₁ means (Wright's formula); effect of number of parents
+- [ ] 6.6 Hybrid cultivar development: Single, three-way, double cross; performance prediction
+
+## Module 7: Scale, thresholds and QTL
+
+*F&M ch. 17, 18, 21*
+
+- [ ] 7.1 Scale and transformations: Log/sqrt transform removes interaction and skew
+- [ ] 7.2 Threshold characters: Liability distribution, threshold, incidence; heritability on the liability scale
+- [ ] 7.3 QTL detection: single-marker analysis: Marker–QTL distance vs detected effect
+- [ ] 7.4 Interval mapping: LOD profile along a chromosome from simulated F₂ / RIL data
+- [ ] 7.5 Marker-assisted selection: Gain from MAS vs phenotypic selection by *h*² and % variance explained
+
+## Module 8: Breeding methods for self-pollinated crops
+
+*Fehr*
+
+- [ ] 8.1 Mass selection and pure-line selection: Selection among lines vs within a mixture
+- [ ] 8.2 Pedigree method: Family tree from F₂ to F₆ with selection at each step
+- [ ] 8.3 Bulk method: Natural selection drift in a bulk; frequency shifts
+- [x] 8.4 [Single-seed descent vs bulk vs pedigree](cultivar/ssd-bulk-pedigree.qmd)
+- [x] 8.5 [Backcrossing](cultivar/backcrossing.qmd)
+- [ ] 8.6 Doubled haploids: DH vs SSD: time to homozygosity, variance among lines
+- [ ] 8.7 Multiline cultivars: Component lines and disease resistance mixtures
+
+## Module 9: Population improvement and cross-pollinated crops
+
+*Fehr; F&M ch. 16*
+
+- [x] 9.1 [Recurrent selection schemes](cultivar/recurrent-selection.qmd)
+- [ ] 9.2 Reciprocal recurrent selection: Gain in cross performance between two populations
+- [ ] 9.3 Clonal cultivars: Selection among clones; heterozygosity fixed
+- [ ] 9.4 Mutation breeding: Mutation rate and population size needed to find a mutant
+
+## Module 10: Field testing and cultivar evaluation
+
+*Fehr*
+
+- [ ] 10.1 Field plot technique: Plot size, border effects and CV
+- [ ] 10.2 Spatial variation and blocking: Simulated field with a gradient; RCBD vs CRD precision
+- [x] 10.3 [Allocating reps, locations and years](cultivar/resource-allocation.qmd)
+- [ ] 10.4 Probability of correct selection: Chance the truly best line is selected vs *h*² and number of entries
+- [ ] 10.5 Cultivar stability: Finlay–Wilkinson / Eberhart–Russell regression on environment index
+- [ ] 10.6 Cultivar release and seed purity: Generations of seed increase; off-type frequency
+
+## Across both books
+- [x] [Breeder's equation per unit time (ΔG = *i·r·σA / L*)](general/gain-per-year.qmd)
+- [x] [Glossary and notation](general/glossary.qmd)
