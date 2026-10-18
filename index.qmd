@@ -1,0 +1,22 @@
+---
+title: "Breeding Concepts"
+subtitle: "Interactive notes on quantitative genetics and cultivar development"
+toc: false
+---
+
+Each page here takes one concept from two standard references, explains it briefly with the key equations, and gives you a widget to change the inputs and watch the result.
+
+- **Quantitative genetics**: D. S. Falconer and T. F. C. Mackay, *Introduction to Quantitative Genetics*, 4th ed.
+- **Cultivar development**: W. R. Fehr, *Principles of Cultivar Development*, Vol. 1.
+
+The pages are study aids, not a substitute for the books. Chapter references point back to the source so you can read the full derivation.
+
+## Pages so far
+
+| Concept | Source | What the widget shows |
+|---|---|---|
+| [Hardy–Weinberg equilibrium](quantgen/hardy-weinberg.qmd) | Falconer & Mackay, ch. 1 | Genotype frequencies as a function of allele frequency, and how a finite sample departs from expectation |
+| [Heritability and response to selection](quantgen/heritability-selection.qmd) | Falconer & Mackay, ch. 8–11 | A simulated population where you set h² and the proportion selected, and compare R = h²S with the realized gain |
+| [Homozygosity under selfing](cultivar/selfing-homozygosity.qmd) | Fehr, ch. 2–3 | How quickly lines become homozygous across F generations for different numbers of segregating loci |
+
+See the [roadmap](roadmap.qmd) for the planned pages.

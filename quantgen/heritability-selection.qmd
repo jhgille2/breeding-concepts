@@ -1,0 +1,86 @@
+---
+title: "Heritability and response to selection"
+description: "The breeder's equation, R = h²S, in a simulated population."
+---
+
+## The idea
+
+A phenotypic value is the sum of a breeding value and everything else: *P* = *A* + *E* (lumping dominance and environment into *E* for simplicity). Narrow-sense heritability is the share of phenotypic variance due to breeding values,
+
+$$
+h^2 = \frac{V_A}{V_P}.
+$$
+
+If we select parents whose mean phenotype is *S* units above the population mean (the **selection differential**), their offspring are expected to be only part of the way there. The expected **response to selection** is
+
+$$
+R = h^2 S = i\,h^2\sigma_P ,
+$$
+
+where *i* is the **intensity of selection**, the selection differential in phenotypic standard deviations, which depends only on the proportion selected when selection is by truncation of a normal distribution.
+
+*Source: Falconer & Mackay, chapters 8 (heritability) and 11 (response to selection).*
+
+## Widget
+
+Each dot is one individual in a simulated population with mean 100. Its breeding value is on the vertical axis and its phenotype on the horizontal axis. The selected parents are the top fraction by phenotype. The predicted response *h²S* is compared with the realized response, the mean breeding value of the selected parents, which is what their offspring inherit on average.
+
+```{ojs}
+viewof h2 = Inputs.range([0.01, 1], {value: 0.4, step: 0.01, label: "Heritability (h²)"})
+viewof sigmaP = Inputs.range([1, 30], {value: 10, step: 1, label: "Phenotypic SD (σP)"})
+viewof propSel = Inputs.range([0.01, 0.9], {value: 0.2, step: 0.01, label: "Proportion selected"})
+viewof N = Inputs.range([100, 3000], {value: 1000, step: 100, label: "Population size"})
+viewof reseed = Inputs.button("New population", {value: 1, reduce: v => v + 1})
+```
+
+```{ojs}
+pop = {
+  const src = d3.randomLcg(reseed * 104729 + N);
+  const sdA = Math.sqrt(h2) * sigmaP, sdE = Math.sqrt(1 - h2) * sigmaP;
+  const rA = d3.randomNormal.source(src)(0, sdA), rE = d3.randomNormal.source(src)(0, sdE);
+  return d3.range(N).map(() => { const A = rA(), E = rE(); return {A: 100 + A, P: 100 + A + E}; });
+}
+
+cutoff = d3.quantile(pop.map(d => d.P), 1 - propSel)
+selected = pop.filter(d => d.P >= cutoff)
+meanP = d3.mean(pop, d => d.P)
+meanA = d3.mean(pop, d => d.A)
+S = d3.mean(selected, d => d.P) - meanP
+predicted = h2 * S
+realized = d3.mean(selected, d => d.A) - meanA
+intensity = S / d3.deviation(pop, d => d.P)
+```
+
+```{ojs}
+Plot.plot({
+  height: 380,
+  marginLeft: 55,
+  x: {label: "Phenotype (P) →"},
+  y: {label: "↑ Breeding value (A)"},
+  color: {legend: true, domain: ["Not selected", "Selected parents"], range: ["#b8b8b8", "#d95f02"]},
+  marks: [
+    Plot.dot(pop, {x: "P", y: "A", r: 2, fill: d => d.P >= cutoff ? "Selected parents" : "Not selected", fillOpacity: 0.6}),
+    Plot.ruleX([cutoff], {strokeDasharray: "4,3"}),
+    Plot.linearRegressionY(pop, {x: "P", y: "A", stroke: "currentColor"}),
+    Plot.ruleY([meanA + realized], {stroke: "#d95f02", strokeWidth: 2})
+  ]
+})
+```
+
+```{ojs}
+md`| | Value |
+|---|---|
+| Selection differential, *S* | ${S.toFixed(2)} |
+| Selection intensity, *i* = *S* / σP | ${intensity.toFixed(2)} |
+| Predicted response, *h²S* | **${predicted.toFixed(2)}** |
+| Realized response in this sample | **${realized.toFixed(2)}** |`
+```
+
+The black line is the regression of breeding value on phenotype. Its slope is *h*², which is exactly why the response is *h*² times the selection differential. The orange line marks the mean breeding value of the selected parents.
+
+## Things to try
+
+- Set *h*² close to 1. Phenotype predicts breeding value almost perfectly, and response nearly equals *S*.
+- Set *h*² to 0.1. You can select very hard and still gain little, because most of what you see is environment.
+- Halve the proportion selected and watch *i* rise more slowly than you might expect. Going from 20% to 10% raises *i* from about 1.40 to 1.75.
+- Use a small population and press "New population" a few times to see how much the realized response varies around the prediction.

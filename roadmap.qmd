@@ -1,0 +1,44 @@
+---
+title: "Roadmap"
+---
+
+Planned concept pages. Ticked items are live.
+
+## Falconer & Mackay, *Introduction to Quantitative Genetics*
+
+- [x] Hardy–Weinberg equilibrium
+- [ ] Changes of gene frequency: selection against recessives and dominants, mutation–selection balance
+- [ ] Genetic drift in small populations
+- [ ] Inbreeding and the inbreeding coefficient *F*
+- [ ] Effective population size
+- [ ] Genotypic values, average effect and breeding value
+- [ ] Partitioning genetic variance: *V*~A~, *V*~D~, *V*~I~
+- [ ] Resemblance between relatives
+- [x] Heritability and response to selection (R = h²S)
+- [ ] Truncation selection and selection intensity
+- [ ] Inbreeding depression and heterosis
+- [ ] Correlated response and genetic correlation
+- [ ] Selection index
+- [ ] Threshold characters
+- [ ] Genotype × environment interaction
+
+## Fehr, *Principles of Cultivar Development*
+
+- [x] Homozygosity with selfing
+- [ ] Population size needed to recover a genotype
+- [ ] Pedigree method
+- [ ] Single-seed descent vs bulk vs pedigree
+- [ ] Backcrossing and recovery of the recurrent parent
+- [ ] Recurrent selection schemes
+- [ ] Doubled haploids
+- [ ] Hybrids and combining ability (GCA/SCA)
+- [ ] Synthetic cultivars
+- [ ] Mass selection and gridding
+- [ ] Field plot technique and precision
+- [ ] Allocating locations, years and replications
+- [ ] Cultivar stability analysis
+
+## Cross-cutting
+
+- [ ] Genetic gain per year: ΔG = i·r·σ~A~ / L
+- [ ] Glossary and notation

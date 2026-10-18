@@ -1,0 +1,65 @@
+---
+title: "Homozygosity under selfing"
+description: "How quickly lines from a cross become homozygous with each generation of self-pollination."
+---
+
+## The idea
+
+An F~1~ from a cross between two homozygous parents is heterozygous at every locus where the parents differ. Each generation of self-pollination halves the proportion of heterozygous loci. In generation F~*g*~, the expected proportion of loci that are still heterozygous is
+
+$$
+H_g = \left(\tfrac{1}{2}\right)^{g-1},
+$$
+
+so the proportion homozygous is 1 − *H*~*g*~. For a single plant to be homozygous at **all** *n* independent segregating loci, the probability is
+
+$$
+\Pr(\text{fully homozygous in } F_g) = \left[1 - \left(\tfrac{1}{2}\right)^{g-1}\right]^{n}.
+$$
+
+The first expression does not depend on how many loci are segregating. The second does, strongly, which is why lines from a wide cross still segregate for some traits after several generations of selfing.
+
+*Source: Fehr, Principles of Cultivar Development, Vol. 1, chapters 2–3.*
+
+## Widget
+
+```{ojs}
+viewof nLoci = Inputs.range([1, 100], {value: 10, step: 1, label: "Segregating loci (n)"})
+viewof gen = Inputs.range([2, 12], {value: 6, step: 1, label: "Generation (F)"})
+```
+
+```{ojs}
+rows = d3.range(1, 13).flatMap(g => {
+  const homLoci = 1 - 0.5 ** (g - 1);
+  return [
+    {g, value: homLoci, measure: "Loci homozygous (average)"},
+    {g, value: homLoci ** nLoci, measure: `Plants homozygous at all ${nLoci} loci`}
+  ];
+})
+current = rows.filter(d => d.g === gen)
+```
+
+```{ojs}
+Plot.plot({
+  height: 340,
+  marginLeft: 50,
+  x: {label: "Generation", ticks: 12, tickFormat: d => `F${d}`},
+  y: {label: "Proportion", domain: [0, 1], grid: true, tickFormat: "%"},
+  color: {legend: true},
+  marks: [
+    Plot.line(rows, {x: "g", y: "value", stroke: "measure", strokeWidth: 2, marker: "circle"}),
+    Plot.ruleX([gen], {strokeDasharray: "4,3"}),
+    Plot.text(current, {x: "g", y: "value", text: d => `${(d.value * 100).toFixed(1)}%`, dx: 8, textAnchor: "start"})
+  ]
+})
+```
+
+```{ojs}
+md`In **F${gen}**, an average line is homozygous at **${(current[0].value * 100).toFixed(1)}%** of its segregating loci, but only **${(current[1].value * 100).toFixed(1)}%** of plants are homozygous at all ${nLoci} loci.`
+```
+
+## Things to try
+
+- With *n* = 1 the two curves are the same. Raise *n* and watch the second curve slide to the right.
+- Find the generation where at least half of the plants are fully homozygous for *n* = 20, then for *n* = 100.
+- Breeders often call F~5~ or F~6~ lines "essentially homozygous". Check what that means for 50 segregating loci.

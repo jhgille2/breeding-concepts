@@ -1,0 +1,101 @@
+---
+title: "Hardy–Weinberg equilibrium"
+description: "Genotype frequencies after one generation of random mating."
+---
+
+## The idea
+
+In a large, randomly mating population with no selection, mutation or migration, allele and genotype frequencies stay constant from generation to generation. If allele *A*~1~ has frequency *p* and *A*~2~ has frequency *q* = 1 − *p*, then after one generation of random mating the genotype frequencies are
+
+$$
+A_1A_1 : A_1A_2 : A_2A_2 \;=\; p^2 : 2pq : q^2 .
+$$
+
+Heterozygotes are most common when *p* = 0.5, where 2*pq* = 0.5. When an allele is rare, almost all copies of it are carried in heterozygotes, which is why selection against a rare recessive is so slow.
+
+*Source: Falconer & Mackay, chapter 1.*
+
+## Widget
+
+Set the allele frequency, then draw a finite sample of individuals to see how much observed genotype counts scatter around the Hardy–Weinberg expectation.
+
+```{ojs}
+viewof p = Inputs.range([0, 1], {value: 0.3, step: 0.01, label: "Frequency of A₁ (p)"})
+viewof n = Inputs.range([10, 1000], {value: 100, step: 10, label: "Sample size (individuals)"})
+viewof seed = Inputs.button("Draw a new sample", {value: 1, reduce: v => v + 1})
+```
+
+```{ojs}
+expected = [
+  {genotype: "A₁A₁", freq: p * p},
+  {genotype: "A₁A₂", freq: 2 * p * (1 - p)},
+  {genotype: "A₂A₂", freq: (1 - p) * (1 - p)}
+]
+
+sample = {
+  const rng = d3.randomLcg(seed * 7919 + Math.round(p * 1000) + n);
+  const counts = {"A₁A₁": 0, "A₁A₂": 0, "A₂A₂": 0};
+  for (let i = 0; i < n; i++) {
+    const a = rng() < p, b = rng() < p;
+    counts[a && b ? "A₁A₁" : a || b ? "A₁A₂" : "A₂A₂"]++;
+  }
+  return Object.entries(counts).map(([genotype, c]) => ({genotype, freq: c / n, count: c}));
+}
+
+chiSq = d3.sum(sample, (d, i) => {
+  const e = expected[i].freq * n;
+  return e > 0 ? (d.count - e) ** 2 / e : 0;
+})
+```
+
+```{ojs}
+Plot.plot({
+  height: 280,
+  marginLeft: 50,
+  y: {domain: [0, 1], label: "Frequency", grid: true},
+  color: {legend: true, domain: ["Expected (HWE)", "Observed sample"]},
+  marks: [
+    Plot.barY(
+      [...expected.map(d => ({...d, kind: "Expected (HWE)"})),
+       ...sample.map(d => ({...d, kind: "Observed sample"}))],
+      {x: "kind", fx: "genotype", y: "freq", fill: "kind", tip: true}
+    ),
+    Plot.ruleY([0])
+  ],
+  fx: {label: null},
+  x: {axis: null}
+})
+```
+
+```{ojs}
+md`Observed counts: **${sample.map(d => `${d.genotype} = ${d.count}`).join(", ")}**.
+χ² against HWE expectation = **${chiSq.toFixed(2)}** (1 df; values above 3.84 would be called a significant departure at α = 0.05, which happens about 5% of the time by chance alone).`
+```
+
+### Genotype frequencies across all values of *p*
+
+```{ojs}
+curve = d3.range(0, 1.0001, 0.01).flatMap(x => [
+  {p: x, freq: x * x, genotype: "A₁A₁"},
+  {p: x, freq: 2 * x * (1 - x), genotype: "A₁A₂"},
+  {p: x, freq: (1 - x) ** 2, genotype: "A₂A₂"}
+])
+
+Plot.plot({
+  height: 300,
+  marginLeft: 50,
+  x: {label: "Frequency of A₁ (p)"},
+  y: {label: "Genotype frequency", domain: [0, 1], grid: true},
+  color: {legend: true},
+  marks: [
+    Plot.line(curve, {x: "p", y: "freq", stroke: "genotype", strokeWidth: 2}),
+    Plot.ruleX([p], {strokeDasharray: "4,3"}),
+    Plot.dot(expected, {x: () => p, y: "freq", fill: "genotype", r: 5, tip: true})
+  ]
+})
+```
+
+## Things to try
+
+- Set *p* = 0.05. Only 0.25% of individuals are *A*~1~*A*~1~, but 9.5% carry *A*~1~ as heterozygotes, so nearly every copy of a rare allele is hidden in a heterozygote.
+- Use a small sample (*n* = 20) and redraw several times. Departures that look large are often just sampling noise.

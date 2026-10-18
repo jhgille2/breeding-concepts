@@ -1,0 +1,9 @@
+/* Observable Inputs buttons inherit Bootstrap colors poorly; give them a visible outline style. */
+form[class^="oi-"] button {
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-secondary-color, #888);
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+}

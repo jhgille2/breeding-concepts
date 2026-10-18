@@ -1,0 +1,46 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Breeding Concepts"
+  description: "Interactive explanations of quantitative genetics and cultivar development."
+  repo-url: https://github.com/jhgille2/breeding-concepts
+  repo-actions: [edit, issue]
+  page-navigation: true
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: roadmap.qmd
+        text: Roadmap
+    right:
+      - icon: github
+        href: https://github.com/jhgille2/breeding-concepts
+  sidebar:
+    style: docked
+    search: true
+    contents:
+      - index.qmd
+      - section: "Quantitative genetics"
+        contents:
+          - quantgen/hardy-weinberg.qmd
+          - quantgen/heritability-selection.qmd
+      - section: "Cultivar development"
+        contents:
+          - cultivar/selfing-homozygosity.qmd
+      - roadmap.qmd
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    toc: true
+    code-fold: true
+    code-summary: "Show widget code"
+    html-math-method: katex
+    css: styles.css
+
+execute:
+  echo: false
